@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Truck, Shield, CreditCard, QrCode, FileText, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { X, ShoppingBag, Truck, Shield, QrCode, Check } from 'lucide-react';
 
 export interface CheckoutProduct {
   id: number;
@@ -17,16 +17,10 @@ interface CheckoutModalProps {
 }
 
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
-const PAYMENT_METHODS = [
-  { id: 'pix', label: 'PIX', icon: QrCode, discount: '10% OFF', color: 'text-green-600' },
-  { id: 'boleto', label: 'Boleto', icon: FileText, discount: '5% OFF', color: 'text-blue-600' },
-  { id: 'card', label: 'Cartão', icon: CreditCard, discount: 'Até 12x', color: 'text-purple-600' },
-];
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('pix');
   const [step, setStep] = useState<'product' | 'form' | 'success'>('product');
   const [form, setForm] = useState({
     name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '',
@@ -37,10 +31,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
 
   const basePrice = parseFloat(product.price.replace(',', '.'));
   const pixPrice = (basePrice * 0.9 * quantity).toFixed(2).replace('.', ',');
-  const boletoPrice = (basePrice * 0.95 * quantity).toFixed(2).replace('.', ',');
-  const cardPrice = (basePrice * quantity).toFixed(2).replace('.', ',');
-  const displayPrice = paymentMethod === 'pix' ? pixPrice : paymentMethod === 'boleto' ? boletoPrice : cardPrice;
-  const installmentValue = ((basePrice * quantity) / 12).toFixed(2).replace('.', ',');
+  const pixDiscount = ((basePrice * quantity) * 0.1).toFixed(2).replace('.', ',');
+  const subtotal = (basePrice * quantity).toFixed(2).replace('.', ',');
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -59,13 +51,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => {
-    if (validate()) setStep('form');
-  };
-
-  const handleFinish = () => {
-    if (validate()) setStep('success');
-  };
+  const handleNext = () => { if (validate()) setStep('form'); };
+  const handleFinish = () => { if (validate()) setStep('success'); };
 
   const maskPhone = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').slice(0, 15);
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4').slice(0, 14);
@@ -73,12 +60,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative w-full md:max-w-2xl max-h-[95vh] md:max-h-[90vh] bg-white overflow-hidden flex flex-col md:rounded-none shadow-2xl">
-        
+      <div className="relative w-full md:max-w-xl max-h-[95vh] md:max-h-[90vh] bg-white overflow-hidden flex flex-col shadow-2xl">
+
         {/* Header */}
         <div className="bg-black text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -92,7 +77,17 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           </button>
         </div>
 
-        {/* Progress Bar */}
+        {/* PIX Badge */}
+        {step !== 'success' && (
+          <div className="bg-green-600 px-4 py-2 flex items-center justify-center gap-2 flex-shrink-0">
+            <QrCode size={14} className="text-white" />
+            <span className="text-white text-[11px] font-black uppercase tracking-widest">
+              Pagamento exclusivo via PIX · 10% de desconto
+            </span>
+          </div>
+        )}
+
+        {/* Progress */}
         {step !== 'success' && (
           <div className="flex border-b border-gray-100 flex-shrink-0">
             {['product', 'form'].map((s, i) => (
@@ -113,26 +108,41 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
         )}
 
         <div className="overflow-y-auto flex-1">
-          {/* STEP SUCCESS */}
+
+          {/* SUCCESS */}
           {step === 'success' && (
-            <div className="flex flex-col items-center justify-center py-16 px-8 text-center">
+            <div className="flex flex-col items-center justify-center py-14 px-8 text-center">
               <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
                 <Check size={40} className="text-white" />
               </div>
               <h3 className="text-2xl font-black uppercase mb-2">Pedido Recebido!</h3>
               <p className="text-gray-500 text-sm mb-6">
-                Em breve nossa equipe entrará em contato para confirmar e processar seu pedido.
+                Envie o comprovante do PIX pelo WhatsApp para confirmar seu pedido.
               </p>
-              <div className="bg-gray-50 border border-gray-200 w-full p-4 mb-6 text-left">
+
+              {/* PIX info box */}
+              <div className="w-full bg-green-50 border border-green-200 p-4 mb-5 text-left">
+                <div className="flex items-center gap-2 mb-3">
+                  <QrCode size={16} className="text-green-700" />
+                  <span className="text-green-700 font-black text-xs uppercase tracking-widest">Chave PIX</span>
+                </div>
+                <p className="text-gray-500 text-[11px] mb-1">Chave aleatória:</p>
+                <p className="font-black text-sm text-gray-800 break-all">sua-chave-pix@aqui.com</p>
+                <p className="text-gray-500 text-[11px] mt-2">Valor a pagar:</p>
+                <p className="font-black text-xl text-green-700">R$ {pixPrice}</p>
+              </div>
+
+              <div className="w-full bg-gray-50 border border-gray-200 p-3 mb-5 text-left">
                 <div className="flex gap-3">
-                  <img src={product.image} alt={product.name} className="w-16 h-16 object-cover" />
+                  <img src={product.image} alt={product.name} className="w-14 h-14 object-cover" />
                   <div>
                     <p className="font-black text-xs uppercase">{product.name}</p>
-                    <p className="text-gray-500 text-xs">Tam. {selectedSize} • Qtd. {quantity}</p>
-                    <p className="text-[#f39b19] font-black mt-1">R$ {displayPrice}</p>
+                    <p className="text-gray-500 text-xs">Tam. {selectedSize} · Qtd. {quantity}</p>
+                    <p className="text-[#f39b19] font-black mt-0.5">R$ {pixPrice}</p>
                   </div>
                 </div>
               </div>
+
               <a
                 href="https://api.whatsapp.com/send?phone=551121154200"
                 target="_blank"
@@ -142,16 +152,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.52a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
                 </svg>
-                Confirmar via WhatsApp
+                Enviar comprovante no WhatsApp
               </a>
               <button onClick={onClose} className="mt-3 text-xs text-gray-400 underline">Fechar</button>
             </div>
           )}
 
-          {/* STEP 1: Product */}
+          {/* STEP 1: Produto */}
           {step === 'product' && (
             <div className="p-6">
-              {/* Product Summary */}
+              {/* Product */}
               <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
                 <div className="w-24 h-24 bg-gray-50 flex-shrink-0 overflow-hidden">
                   <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -163,11 +173,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                   <h3 className="font-black text-sm uppercase leading-tight mb-1">{product.name}</h3>
                   <p className="text-gray-400 text-xs line-through">de R$ {product.oldPrice}</p>
                   <p className="text-xl font-black">R$ {product.price}</p>
-                  <p className="text-[10px] text-gray-500">12x de R$ {product.installments}</p>
                 </div>
               </div>
 
-              {/* Size Selector */}
+              {/* Size */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-3">
                   <label className="font-black text-xs uppercase tracking-widest">Tamanho (BR)</label>
@@ -197,83 +206,43 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
                     className="w-9 h-9 border border-gray-300 flex items-center justify-center font-bold hover:border-[#f39b19] hover:text-[#f39b19] transition-colors"
-                  >
-                    −
-                  </button>
+                  >−</button>
                   <span className="font-black text-lg w-8 text-center">{quantity}</span>
                   <button
                     onClick={() => setQuantity(q => Math.min(5, q + 1))}
                     className="w-9 h-9 border border-gray-300 flex items-center justify-center font-bold hover:border-[#f39b19] hover:text-[#f39b19] transition-colors"
-                  >
-                    +
-                  </button>
+                  >+</button>
                 </div>
               </div>
 
-              {/* Payment Method */}
-              <div className="mb-6">
-                <label className="font-black text-xs uppercase tracking-widest block mb-3">Forma de Pagamento</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {PAYMENT_METHODS.map(pm => {
-                    const Icon = pm.icon;
-                    return (
-                      <button
-                        key={pm.id}
-                        onClick={() => setPaymentMethod(pm.id)}
-                        className={`p-3 border flex flex-col items-center gap-1 transition-all ${
-                          paymentMethod === pm.id
-                            ? 'border-[#f39b19] bg-orange-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                      >
-                        <Icon size={18} className={paymentMethod === pm.id ? 'text-[#f39b19]' : 'text-gray-500'} />
-                        <span className={`text-[10px] font-bold ${paymentMethod === pm.id ? 'text-[#f39b19]' : 'text-gray-600'}`}>
-                          {pm.label}
-                        </span>
-                        <span className="text-[9px] text-green-600 font-bold">{pm.discount}</span>
-                      </button>
-                    );
-                  })}
+              {/* PIX info */}
+              <div className="bg-green-50 border border-green-200 p-4 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <QrCode size={16} className="text-green-700" />
+                  <span className="text-green-700 font-black text-xs uppercase tracking-widest">Pagamento via PIX</span>
                 </div>
-              </div>
-
-              {/* Order Total */}
-              <div className="bg-gray-50 p-4 mb-6">
                 <div className="flex justify-between text-xs text-gray-500 mb-1">
                   <span>Subtotal ({quantity}x)</span>
-                  <span>R$ {(parseFloat(product.price.replace(',', '.')) * quantity).toFixed(2).replace('.', ',')}</span>
+                  <span>R$ {subtotal}</span>
                 </div>
-                {paymentMethod === 'pix' && (
-                  <div className="flex justify-between text-xs text-green-600 mb-1">
-                    <span>Desconto PIX (10%)</span>
-                    <span>-R$ {((parseFloat(product.price.replace(',', '.')) * quantity) * 0.1).toFixed(2).replace('.', ',')}</span>
-                  </div>
-                )}
-                {paymentMethod === 'boleto' && (
-                  <div className="flex justify-between text-xs text-blue-600 mb-1">
-                    <span>Desconto Boleto (5%)</span>
-                    <span>-R$ {((parseFloat(product.price.replace(',', '.')) * quantity) * 0.05).toFixed(2).replace('.', ',')}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-xs text-green-600 mb-1">
+                  <span>Desconto PIX (10%)</span>
+                  <span>-R$ {pixDiscount}</span>
+                </div>
                 <div className="flex justify-between text-xs text-green-600 mb-1">
                   <span>Frete</span>
                   <span className="font-bold">GRÁTIS</span>
                 </div>
-                <div className="border-t border-gray-200 pt-2 mt-2 flex justify-between">
-                  <span className="font-black text-sm uppercase">Total</span>
-                  <div className="text-right">
-                    <p className="font-black text-lg">R$ {displayPrice}</p>
-                    {paymentMethod === 'card' && (
-                      <p className="text-[10px] text-gray-500">12x de R$ {installmentValue}</p>
-                    )}
-                  </div>
+                <div className="border-t border-green-200 pt-2 mt-2 flex justify-between items-center">
+                  <span className="font-black text-sm uppercase">Total PIX</span>
+                  <span className="font-black text-xl text-green-700">R$ {pixPrice}</span>
                 </div>
               </div>
 
-              {/* Trust badges */}
+              {/* Trust */}
               <div className="grid grid-cols-3 gap-2 mb-6">
                 {[
-                  { icon: Shield, text: 'Compra 100% Segura' },
+                  { icon: Shield, text: 'Compra Segura' },
                   { icon: Truck, text: 'Frete Grátis' },
                   { icon: Check, text: 'Garantia 30 dias' },
                 ].map(({ icon: Icon, text }) => (
@@ -293,29 +262,27 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
             </div>
           )}
 
-          {/* STEP 2: Form */}
+          {/* STEP 2: Dados */}
           {step === 'form' && (
             <div className="p-6">
               <div className="flex gap-3 mb-6 bg-gray-50 p-3">
                 <img src={product.image} alt={product.name} className="w-12 h-12 object-cover" />
                 <div>
                   <p className="font-black text-xs uppercase">{product.name}</p>
-                  <p className="text-gray-500 text-xs">Tam. {selectedSize} • Qtd. {quantity}</p>
-                  <p className="font-black text-[#f39b19]">R$ {displayPrice}</p>
+                  <p className="text-gray-500 text-xs">Tam. {selectedSize} · Qtd. {quantity}</p>
+                  <p className="font-black text-green-700">R$ {pixPrice} <span className="text-[10px] font-normal text-gray-400">(PIX)</span></p>
                 </div>
               </div>
 
               <h4 className="font-black text-xs uppercase tracking-widest mb-4">Dados Pessoais</h4>
               <div className="grid grid-cols-1 gap-3 mb-5">
                 {[
-                  { key: 'name', label: 'Nome completo', placeholder: 'Seu nome', col: 'full' },
-                  { key: 'cpf', label: 'CPF', placeholder: '000.000.000-00', col: 'half', mask: maskCPF },
-                  { key: 'phone', label: 'WhatsApp / Telefone', placeholder: '(00) 00000-0000', col: 'half', mask: maskPhone },
+                  { key: 'name', label: 'Nome completo', placeholder: 'Seu nome' },
+                  { key: 'cpf', label: 'CPF', placeholder: '000.000.000-00', mask: maskCPF },
+                  { key: 'phone', label: 'WhatsApp / Telefone', placeholder: '(00) 00000-0000', mask: maskPhone },
                 ].map(field => (
                   <div key={field.key}>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">
-                      {field.label}
-                    </label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">{field.label}</label>
                     <input
                       type="text"
                       placeholder={field.placeholder}
@@ -325,9 +292,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                         setForm(f => ({ ...f, [field.key]: val }));
                         setErrors(er => ({ ...er, [field.key]: '' }));
                       }}
-                      className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:border-[#f39b19] transition-colors ${
-                        errors[field.key] ? 'border-red-400' : 'border-gray-300'
-                      }`}
+                      className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:border-[#f39b19] transition-colors ${errors[field.key] ? 'border-red-400' : 'border-gray-300'}`}
                     />
                     {errors[field.key] && <p className="text-red-500 text-[10px] mt-1">{errors[field.key]}</p>}
                   </div>
@@ -344,9 +309,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                   { key: 'state', label: 'Estado', placeholder: 'SP', cols: 1 },
                 ].map(field => (
                   <div key={field.key} className={field.cols === 2 ? 'col-span-2' : ''}>
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">
-                      {field.label}
-                    </label>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-gray-600 mb-1">{field.label}</label>
                     <input
                       type="text"
                       placeholder={field.placeholder}
@@ -356,9 +319,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                         setForm(f => ({ ...f, [field.key]: val }));
                         setErrors(er => ({ ...er, [field.key]: '' }));
                       }}
-                      className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:border-[#f39b19] transition-colors ${
-                        errors[field.key] ? 'border-red-400' : 'border-gray-300'
-                      }`}
+                      className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:border-[#f39b19] transition-colors ${errors[field.key] ? 'border-red-400' : 'border-gray-300'}`}
                     />
                     {errors[field.key] && <p className="text-red-500 text-[10px] mt-1">{errors[field.key]}</p>}
                   </div>
@@ -369,15 +330,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 <button
                   onClick={() => setStep('product')}
                   className="flex-1 border border-black text-black py-3.5 font-black uppercase tracking-widest text-xs hover:bg-gray-50 transition-colors"
-                >
-                  ← Voltar
-                </button>
+                >← Voltar</button>
                 <button
                   onClick={handleFinish}
                   className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors"
-                >
-                  Finalizar Pedido ✓
-                </button>
+                >Finalizar Pedido ✓</button>
               </div>
             </div>
           )}
