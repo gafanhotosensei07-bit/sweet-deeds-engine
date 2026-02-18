@@ -1,27 +1,33 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import TopBanner from './components/TopBanner';
+import Header from './components/Header';
+import TrustBar from './components/TrustBar';
+import ProductGrid from './components/ProductGrid';
+import Footer from './components/Footer';
 
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <div className="min-h-screen bg-white font-['Maven_Pro',sans-serif]">
+      <TopBanner />
+      <Header />
+      <main>
+        <TrustBar />
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-black text-white p-8 rounded-xl text-center mb-12">
+            <h1 className="text-3xl md:text-5xl font-black mb-4 uppercase italic">
+              Promoção de Lançamento
+            </h1>
+            <p className="text-lg md:text-xl font-bold text-[#f39b19]">
+              Tênis Premium com até 60% de Desconto
+            </p>
+          </div>
+        </div>
+        <ProductGrid title="MONTE SEU COMBO COM DESCONTO AUTOMÁTICO" />
+        <ProductGrid title="MAIS VENDIDOS DO DIA" />
+      </main>
+      <Footer />
+    </div>
+  );
+}
 
 export default App;
