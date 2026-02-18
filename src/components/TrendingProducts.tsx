@@ -1,9 +1,9 @@
 import React from 'react';
-import tnTripleBlack from '@/assets/tn-triple-black.jpg';
-import tnSunset from '@/assets/tn-sunset.jpg';
-import tnBlueGradient from '@/assets/tn-blue-gradient.jpg';
-import tnDrift from '@/assets/tn-drift.jpg';
-import tnUtility from '@/assets/tn-utility.jpg';
+import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
+import tnSunset from '@/assets/tn-sunset-final.jpg';
+import tnBlueGradient from '@/assets/tn-blue-gradient-final.png';
+import tnDrift from '@/assets/tn-drift-bred-final.jpg';
+import tnUtility from '@/assets/tn-utility-final.jpg';
 
 interface TrendingProduct {
   id: number;
@@ -32,7 +32,7 @@ const trendingProducts: TrendingProduct[] = [
   {
     id: 102,
     name: 'AIR MAX PLUS SUNSET',
-    description: 'Degradê laranja/amarelo icônico. Um dos TN mais históricos — sempre volta a viralizar.',
+    description: 'Degradê laranja/amarelo icônico desde 1998. Um dos TN mais históricos — sempre volta a viralizar.',
     oldPrice: '399,90',
     price: '169,90',
     installments: '15,44',
@@ -53,8 +53,8 @@ const trendingProducts: TrendingProduct[] = [
   },
   {
     id: 104,
-    name: 'AIR MAX PLUS DRIFT',
-    description: 'Versão futurista do TN clássico. Tuned Air + overlays moldados modernos. Trend de 2026.',
+    name: 'AIR MAX PLUS DRIFT "BRED"',
+    description: 'Versão futurista do TN clássico. Tuned Air com overlays moldados modernos. Trend de 2026.',
     oldPrice: '449,90',
     price: '189,90',
     installments: '17,26',
@@ -65,7 +65,7 @@ const trendingProducts: TrendingProduct[] = [
   {
     id: 105,
     name: 'AIR MAX PLUS UTILITY',
-    description: 'Estilo robusto inspirado na praia para as ruas. Mudguard em camurça + toggle closure.',
+    description: 'Estilo robusto com mudguard em camurça + toggle lacing. Pegada techwear urbano.',
     oldPrice: '419,90',
     price: '179,90',
     installments: '16,35',
@@ -96,7 +96,6 @@ const TrendingProducts: React.FC = () => {
             key={product.id}
             className="group relative border border-transparent hover:border-gray-200 transition-all p-2 flex flex-col"
           >
-            {/* Badges */}
             <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
               <span className="bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 block">
                 {product.discount}
@@ -106,7 +105,6 @@ const TrendingProducts: React.FC = () => {
               </span>
             </div>
 
-            {/* Image */}
             <div className="aspect-square overflow-hidden mb-3 bg-gray-50">
               <img
                 src={product.image}
@@ -115,7 +113,6 @@ const TrendingProducts: React.FC = () => {
               />
             </div>
 
-            {/* Info */}
             <div className="text-center flex flex-col flex-1">
               <h3 className="text-xs font-black mb-1 uppercase leading-tight">{product.name}</h3>
               <p className="text-[10px] text-gray-500 mb-2 leading-relaxed line-clamp-2">
