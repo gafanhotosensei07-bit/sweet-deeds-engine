@@ -363,12 +363,21 @@ const KidsSection: React.FC = () => {
                 </div>
 
                 {/* Image */}
-                <div className="aspect-square overflow-hidden mb-3 bg-gray-50">
+                <div
+                  className="aspect-square overflow-hidden mb-3 bg-gray-50 relative cursor-pointer"
+                  onClick={() => setCheckoutProduct(product)}
+                >
                   <img
                     src={product.image}
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-300 flex items-center justify-center">
+                    <span className="bg-[#f39b19] text-white text-[10px] font-black uppercase tracking-widest px-4 py-2 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 flex items-center gap-1">
+                      🛒 VER PRODUTO
+                    </span>
+                  </div>
                 </div>
 
                 {/* Info */}
