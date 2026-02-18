@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
 import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
 import tnSunset from '@/assets/tn-sunset-final.jpg';
 import tnBlueGradient from '@/assets/tn-blue-gradient-final.png';
@@ -136,6 +137,8 @@ const trendingProducts: TrendingProduct[] = [
 ];
 
 const TrendingProducts: React.FC = () => {
+  const [checkoutProduct, setCheckoutProduct] = useState<CheckoutProduct | null>(null);
+
   return (
     <section className="container mx-auto px-4 py-12">
       <div className="text-center mb-10">
@@ -184,7 +187,10 @@ const TrendingProducts: React.FC = () => {
                 <p className="text-[10px] text-gray-600 mb-3">
                   <strong>12x</strong> de <strong>R${product.installments}</strong>
                 </p>
-                <button className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors">
+                <button
+                  onClick={() => setCheckoutProduct(product)}
+                  className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors"
+                >
                   COMPRAR
                 </button>
               </div>
@@ -192,6 +198,8 @@ const TrendingProducts: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <CheckoutModal product={checkoutProduct} onClose={() => setCheckoutProduct(null)} />
     </section>
   );
 };

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
 
 interface Product {
   id: number;
@@ -22,6 +23,8 @@ const products: Product[] = [
 ];
 
 const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
+  const [checkoutProduct, setCheckoutProduct] = useState<CheckoutProduct | null>(null);
+
   return (
     <section className="container mx-auto px-4 py-12">
       <h2 className="text-2xl font-black text-center mb-8 uppercase tracking-tighter">{title}</h2>
@@ -45,13 +48,18 @@ const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
               <p className="text-[10px] text-gray-600 mb-4">
                 <strong>12x</strong> de <strong>R${product.installments}</strong>
               </p>
-              <button className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors">
+              <button
+                onClick={() => setCheckoutProduct(product)}
+                className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors"
+              >
                 COMPRAR
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      <CheckoutModal product={checkoutProduct} onClose={() => setCheckoutProduct(null)} />
     </section>
   );
 };
