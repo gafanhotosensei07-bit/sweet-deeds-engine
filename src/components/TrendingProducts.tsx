@@ -1,4 +1,9 @@
 import React from 'react';
+import tnTripleBlack from '@/assets/tn-triple-black.jpg';
+import tnSunset from '@/assets/tn-sunset.jpg';
+import tnBlueGradient from '@/assets/tn-blue-gradient.jpg';
+import tnDrift from '@/assets/tn-drift.jpg';
+import tnUtility from '@/assets/tn-utility.jpg';
 
 interface TrendingProduct {
   id: number;
@@ -16,11 +21,11 @@ const trendingProducts: TrendingProduct[] = [
   {
     id: 101,
     name: 'AIR MAX PLUS TRIPLE BLACK',
-    description: 'O mais usado. Combina com qualquer look, muito popular entre adolescentes.',
+    description: 'Todo preto, combina com qualquer look. O TN mais usado por adolescentes no streetwear.',
     oldPrice: '399,90',
     price: '169,90',
     installments: '15,44',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500&q=80',
+    image: tnTripleBlack,
     discount: '-57%',
     badge: '🥇 O Mais Usado',
   },
@@ -31,40 +36,40 @@ const trendingProducts: TrendingProduct[] = [
     oldPrice: '399,90',
     price: '169,90',
     installments: '15,44',
-    image: 'https://images.unsplash.com/photo-1584735175315-9d5df23be2e2?w=500&q=80',
+    image: tnSunset,
     discount: '-57%',
     badge: '🌅 Icônico',
   },
   {
     id: 103,
     name: 'AIR MAX PLUS BLUE GRADIENT',
-    description: 'Azul degradê que domina o TikTok e Instagram. Estilo inconfundível nas redes.',
+    description: 'Neptune Blue Gradient. Azul degradê que domina o TikTok e Instagram.',
     oldPrice: '399,90',
     price: '169,90',
     installments: '15,44',
-    image: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=500&q=80',
+    image: tnBlueGradient,
     discount: '-57%',
-    badge: '📱 TikTok',
+    badge: '📱 TikTok Hit',
   },
   {
     id: 104,
     name: 'AIR MAX PLUS DRIFT',
-    description: 'Versão mais nova do TN com visual futurista. Crescendo forte em 2026.',
-    oldPrice: '429,90',
-    price: '184,90',
-    installments: '16,81',
-    image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=500&q=80',
+    description: 'Versão futurista do TN clássico. Tuned Air + overlays moldados modernos. Trend de 2026.',
+    oldPrice: '449,90',
+    price: '189,90',
+    installments: '17,26',
+    image: tnDrift,
     discount: '-57%',
-    badge: '🚀 2026',
+    badge: '🚀 Futuro 2026',
   },
   {
     id: 105,
     name: 'AIR MAX PLUS UTILITY',
-    description: 'Estilo robusto com pegada "techwear". Para quem busca funcionalidade e atitude.',
+    description: 'Estilo robusto inspirado na praia para as ruas. Mudguard em camurça + toggle closure.',
     oldPrice: '419,90',
     price: '179,90',
     installments: '16,35',
-    image: 'https://images.unsplash.com/photo-1539185441755-769473a23570?w=500&q=80',
+    image: tnUtility,
     discount: '-57%',
     badge: '⚙️ Techwear',
   },
@@ -75,13 +80,13 @@ const TrendingProducts: React.FC = () => {
     <section className="container mx-auto px-4 py-12">
       <div className="text-center mb-10">
         <span className="inline-block bg-[#f39b19] text-white text-xs font-bold px-4 py-1 mb-3 uppercase tracking-widest">
-          Tendências 2025
+          Nike Air Max Plus TN
         </span>
         <h2 className="text-2xl font-black uppercase tracking-tighter">
-          MODELOS MAIS POPULARES AGORA
+          OS 5 TN MAIS POPULARES AGORA
         </h2>
         <p className="text-gray-500 text-sm mt-2">
-          Selecionados com base nos lançamentos e buscas mais quentes do momento
+          Pesquisados e selecionados com base nas tendências mais quentes de 2025/2026
         </p>
       </div>
 
@@ -102,7 +107,7 @@ const TrendingProducts: React.FC = () => {
             </div>
 
             {/* Image */}
-            <div className="aspect-square overflow-hidden mb-3">
+            <div className="aspect-square overflow-hidden mb-3 bg-gray-50">
               <img
                 src={product.image}
                 alt={product.name}
