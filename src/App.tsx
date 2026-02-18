@@ -4,6 +4,7 @@ import Hero from './components/Hero';
 import Banners from './components/Banners';
 import ProductGrid from './components/ProductGrid';
 import TNSection from './components/TNSection';
+import KidsSection from './components/KidsSection';
 import Footer from './components/Footer';
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Hero />
         <Banners />
         <TNSection />
+        <KidsSection />
         <ProductGrid title="MONTE SEU COMBO COM DESCONTO AUTOMÁTICO" />
         <ProductGrid title="MAIS VENDIDOS DO DIA" />
       </main>
