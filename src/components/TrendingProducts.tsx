@@ -4,6 +4,11 @@ import tnSunset from '@/assets/tn-sunset-final.jpg';
 import tnBlueGradient from '@/assets/tn-blue-gradient-final.png';
 import tnDrift from '@/assets/tn-drift-bred-final.jpg';
 import tnUtility from '@/assets/tn-utility-final.jpg';
+import tnHyperBlue from '@/assets/tn-hyper-blue-real.jpg';
+import tnUniversityRed from '@/assets/tn-university-red-real2.jpg';
+import tnVoltagePurple from '@/assets/tn-voltage-purple-real.png';
+import tnTripleWhite from '@/assets/tn-triple-white-real.jpg';
+import tnGreedy from '@/assets/tn-greedy-real.jpg';
 
 interface TrendingProduct {
   id: number;
@@ -72,6 +77,61 @@ const trendingProducts: TrendingProduct[] = [
     image: tnUtility,
     discount: '-57%',
     badge: '⚙️ Techwear',
+  },
+  {
+    id: 106,
+    name: 'AIR MAX PLUS OG "HYPER BLUE"',
+    description: 'Degradê azul que vai do claro ao escuro, inspirado no oceano. Re-lançado em 2025 com muito hype.',
+    oldPrice: '399,90',
+    price: '169,90',
+    installments: '15,44',
+    image: tnHyperBlue,
+    discount: '-57%',
+    badge: '🌊 Re-launch 2025',
+  },
+  {
+    id: 107,
+    name: 'AIR MAX PLUS TN "UNIVERSITY RED"',
+    description: 'Vermelho intenso que virou clássico absoluto. Um dos TN mais procurados no Brasil.',
+    oldPrice: '399,90',
+    price: '169,90',
+    installments: '15,44',
+    image: tnUniversityRed,
+    discount: '-57%',
+    badge: '🔴 Clássico BR',
+  },
+  {
+    id: 108,
+    name: 'AIR MAX PLUS OG "VOLTAGE PURPLE"',
+    description: 'Edição comemorativa de 25 anos (2024). Roxo elétrico com swoosh laranja — raro e exclusivo.',
+    oldPrice: '449,90',
+    price: '189,90',
+    installments: '17,26',
+    image: tnVoltagePurple,
+    discount: '-57%',
+    badge: '💜 25 Anos',
+  },
+  {
+    id: 109,
+    name: 'AIR MAX PLUS TN "TRIPLE WHITE"',
+    description: 'O TN todo branco. Limpo, versátil e indispensável. Combina com qualquer outfit.',
+    oldPrice: '399,90',
+    price: '169,90',
+    installments: '15,44',
+    image: tnTripleWhite,
+    discount: '-57%',
+    badge: '⚪ All White',
+  },
+  {
+    id: 110,
+    name: 'AIR MAX PLUS TN SE "GREEDY"',
+    description: 'Sunset + Hyper Blue num único TN. Metade laranja, metade azul. Lenda do streetwear.',
+    oldPrice: '499,90',
+    price: '209,90',
+    installments: '19,08',
+    image: tnGreedy,
+    discount: '-58%',
+    badge: '🏆 Edição Rara',
   },
 ];
 
