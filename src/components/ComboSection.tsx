@@ -3,6 +3,10 @@ import { CheckoutProduct } from './CheckoutModal';
 import { useCart } from '@/context/CartContext';
 import { Check, ShoppingBag, Tag, Zap } from 'lucide-react';
 
+import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
+import tnSunset from '@/assets/tn-sunset-final.jpg';
+import tnBlueGradient from '@/assets/tn-blue-gradient-final.png';
+
 const COMBO_PRODUCTS: CheckoutProduct[] = [
   { id: 1, name: 'AIR FORCE NOBOOK PRETO', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851bcdf477b4/56912e4c305e752e5678b2ceb0c002ad-6851bd732581d_mini.jpg', discount: '-57%' },
   { id: 2, name: 'NIKE DUNK GOLD', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851c4af4b1b8/74ef23656f61030e29d5b1109abb95c2-6851c5364a28f_mini.jpeg', discount: '-57%' },
@@ -12,6 +16,9 @@ const COMBO_PRODUCTS: CheckoutProduct[] = [
   { id: 6, name: 'NIKE AIR MAX 90 PRETO/BRANCO', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851c94dcdbd0/193e8b3f9a6ed30dfea1421705623dd4-6851c9a850ee1_mini.jpg', discount: '-57%' },
   { id: 7, name: 'VANS KNU', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851c4d837ffa/49db6d60621fc7a44615dcf3e065e329-6851c5309f6b9_mini.jpg', discount: '-57%' },
   { id: 8, name: 'NIKE AIR FORCE 1 BRANCO', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851bceb2fe34/7fae9a8b2c8a19aa1f2d0ecfa69baac5-6851bdbdc11a1_mini.jpg', discount: '-57%' },
+  { id: 9, name: 'AIR MAX PLUS TRIPLE BLACK', oldPrice: '179,90', price: '99,90', installments: '9,08', image: tnTripleBlack, discount: '-44%' },
+  { id: 10, name: 'AIR MAX PLUS SUNSET', oldPrice: '169,90', price: '84,90', installments: '7,71', image: tnSunset, discount: '-50%' },
+  { id: 11, name: 'AIR MAX PLUS BLUE GRADIENT', oldPrice: '189,90', price: '109,90', installments: '9,99', image: tnBlueGradient, discount: '-42%' },
 ];
 
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
