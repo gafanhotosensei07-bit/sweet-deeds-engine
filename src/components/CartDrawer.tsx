@@ -140,7 +140,11 @@ const CartDrawer: React.FC = () => {
               {/* Valor */}
               <div className="w-full bg-green-50 border border-green-200 p-3 mb-4 text-center">
                 <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Valor a pagar (PIX com 10% off)</p>
-                <p className="font-black text-2xl text-green-700">R$ {pixTotal}</p>
+                <p className="font-black text-2xl text-green-700">
+                  R$ {pixResult?.pixAmount
+                    ? pixResult.pixAmount.toFixed(2).replace('.', ',')
+                    : pixTotal}
+                </p>
               </div>
 
               {/* Copia e cola */}
