@@ -5,6 +5,7 @@ import Banners from './components/Banners';
 import ProductGrid from './components/ProductGrid';
 import TNSection from './components/TNSection';
 import KidsSection from './components/KidsSection';
+import ComboSection from './components/ComboSection';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import { CartProvider } from './context/CartContext';
@@ -19,7 +20,7 @@ function App() {
           <Banners />
           <TNSection />
           <KidsSection />
-          <ProductGrid title="MONTE SEU COMBO COM DESCONTO AUTOMÁTICO" />
+          <ComboSection />
           <ProductGrid title="MAIS VENDIDOS DO DIA" />
         </main>
         <Footer />
