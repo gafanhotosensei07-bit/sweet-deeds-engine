@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      gateway_settings: {
+        Row: {
+          api_token: string
+          created_at: string
+          gateway_name: string
+          id: string
+          is_active: boolean
+          offer_hash: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          api_token?: string
+          created_at?: string
+          gateway_name: string
+          id?: string
+          is_active?: boolean
+          offer_hash?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Update: {
+          api_token?: string
+          created_at?: string
+          gateway_name?: string
+          id?: string
+          is_active?: boolean
+          offer_hash?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
