@@ -9,6 +9,21 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+// Gera QR Code como base64 PNG via Google Chart API (funciona no Deno Edge)
+async function generateQRCodeDataURL(text: string): Promise<string | null> {
+  try {
+    const encoded = encodeURIComponent(text);
+    const url = `https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=${encoded}&choe=UTF-8`;
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buffer = await res.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    return `data:image/png;base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -111,11 +126,16 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
     data.transaction?.pix?.qr_code || data.transaction?.pix?.emv || data.transaction?.qr_code ||
     undefined;
 
-  const pixQrCodeImage =
+  let pixQrCodeImage =
     data.pix?.qr_code_url || data.pix?.qr_code_image || data.pix?.base64 || data.pix?.image ||
     data.qr_code_url || data.qr_code_image ||
     data.transaction?.pix?.qr_code_url || data.transaction?.pix?.base64 ||
     undefined;
+
+  // Se a API não retornou imagem, gerar localmente a partir do código EMV
+  if (!pixQrCodeImage && pixQrCode) {
+    pixQrCodeImage = await generateQRCodeDataURL(pixQrCode) ?? undefined;
+  }
 
   return {
     success: true,
@@ -226,9 +246,14 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
     data.pix?.pix_qr_code || data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
     data.transaction?.pix?.pix_qr_code || data.qr_code || undefined;
 
-  const pixQrCodeImage =
+  let pixQrCodeImage =
     data.pix?.qr_code_base64 || data.pix?.qr_code_image || data.pix?.base64 || data.pix?.qr_code_url ||
     data.transaction?.pix?.qr_code_base64 || data.qr_code_url || undefined;
+
+  // qr_code_base64 veio null da SigmaPay → gerar localmente
+  if (!pixQrCodeImage && pixQrCode) {
+    pixQrCodeImage = await generateQRCodeDataURL(pixQrCode) ?? undefined;
+  }
 
   const checkoutUrl = gateway.offer_hash
     ? `https://go.sigmapay.com.br/${gateway.offer_hash}`
