@@ -83,9 +83,13 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
       },
     },
     cart: items.map((item: any) => ({
-      name: `${item.name} - Tam. ${item.size}`,
-      quantity: item.quantity,
+      product_hash: gateway.product_id,
+      title: `${item.name} - Tam. ${item.size}`,
+      cover: null,
       price: Math.round(parseFloat(String(item.price).replace(',', '.')) * 100),
+      quantity: item.quantity,
+      operation_type: 1,
+      tangible: true,
     })),
   };
 
@@ -217,13 +221,14 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
   console.log('SigmaPay response data:', JSON.stringify(data));
 
   // Extrair dados PIX da resposta SigmaPay
+  // Campos corretos: pix.pix_qr_code (EMV) e pix.qr_code_base64 (imagem)
   const pixQrCode =
-    data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
-    data.transaction?.pix?.qr_code || data.qr_code || undefined;
+    data.pix?.pix_qr_code || data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
+    data.transaction?.pix?.pix_qr_code || data.qr_code || undefined;
 
   const pixQrCodeImage =
-    data.pix?.qr_code_image || data.pix?.base64 || data.pix?.qr_code_url ||
-    data.transaction?.pix?.qr_code_image || data.qr_code_url || undefined;
+    data.pix?.qr_code_base64 || data.pix?.qr_code_image || data.pix?.base64 || data.pix?.qr_code_url ||
+    data.transaction?.pix?.qr_code_base64 || data.qr_code_url || undefined;
 
   const checkoutUrl = gateway.offer_hash
     ? `https://go.sigmapay.com.br/${gateway.offer_hash}`
