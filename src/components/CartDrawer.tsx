@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield, Loader2, Copy, CheckCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
+import { QRCodeSVG } from 'qrcode.react';
 
 const CartDrawer: React.FC = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
@@ -122,8 +123,17 @@ const CartDrawer: React.FC = () => {
               <p className="text-gray-500 text-xs mb-6">Escaneie o QR Code ou copie o código para pagar</p>
 
               {/* QR Code Image */}
-              {pixResult?.pixQrCodeImage ? (
-                <div className="w-48 h-48 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
+              {pixResult?.pixQrCode ? (
+                <div className="w-52 h-52 mb-5 border-4 border-green-500 p-2 bg-white flex items-center justify-center">
+                  <QRCodeSVG
+                    value={pixResult.pixQrCode}
+                    size={180}
+                    level="M"
+                    includeMargin={false}
+                  />
+                </div>
+              ) : pixResult?.pixQrCodeImage ? (
+                <div className="w-52 h-52 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
                   <img
                     src={pixResult.pixQrCodeImage.startsWith('data:') ? pixResult.pixQrCodeImage : `data:image/png;base64,${pixResult.pixQrCodeImage}`}
                     alt="QR Code PIX"
@@ -131,7 +141,7 @@ const CartDrawer: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className="w-48 h-48 mb-5 border-4 border-green-500 bg-green-50 flex flex-col items-center justify-center gap-2">
+                <div className="w-52 h-52 mb-5 border-4 border-green-500 bg-green-50 flex flex-col items-center justify-center gap-2">
                   <QrCode size={64} className="text-green-400" />
                   <span className="text-green-600 text-[10px] font-bold uppercase">QR Code PIX</span>
                 </div>
