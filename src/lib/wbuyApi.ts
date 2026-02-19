@@ -7,7 +7,7 @@ const ZEROONEPAY_API_TOKEN = '6aLIlUuOKq0SnOpNYV2y93vKF9SqNVixsdz3arjQ7GqhhhNrmH
 const PRODUCT_HASH = 'dv4dkj9lcg';
 const OFFER_HASH = 'rxcfh4s38y';
 
-// URL direta do checkout da oferta (descoberta via API)
+// URL direta do checkout da oferta (fallback)
 export const CHECKOUT_URL = `https://go.zeroonepay.com.br/${OFFER_HASH}`;
 
 export interface WbuyOrderItem {
@@ -35,9 +35,20 @@ export interface WbuyOrderPayload {
   totalPrice: number; // valor com desconto PIX (em reais)
 }
 
+export interface ZeroOnePayResult {
+  success: boolean;
+  checkoutUrl: string;
+  orderId?: string;
+  error?: string;
+  // Dados PIX para exibição inline
+  pixQrCode?: string;       // código copia-e-cola (EMV)
+  pixQrCodeImage?: string;  // imagem base64 ou URL do QR code
+  pixAmount?: number;       // valor em reais
+}
+
 export const createZeroOnePayOrder = async (
   payload: WbuyOrderPayload
-): Promise<{ success: boolean; checkoutUrl: string; orderId?: string; error?: string }> => {
+): Promise<ZeroOnePayResult> => {
   try {
     const cpfClean = payload.customer.cpf.replace(/\D/g, '');
     const phoneClean = payload.customer.phone.replace(/\D/g, '');
@@ -54,7 +65,7 @@ export const createZeroOnePayOrder = async (
         name: payload.customer.name,
         cpf: cpfClean,
         phone: phoneClean,
-        email: `${cpfClean}@cliente.com`, // fallback pois não coletamos email
+        email: `${cpfClean}@cliente.com`,
         address: {
           zip_code: cepClean,
           street: payload.customer.address,
@@ -81,22 +92,48 @@ export const createZeroOnePayOrder = async (
     });
 
     const data = await response.json();
+    console.log('ZeroOnePay API response:', data);
 
-    if (response.ok && (data.success !== false)) {
+    // Extrair dados PIX de diferentes formatos possíveis da resposta
+    const pixQrCode =
+      data.pix?.qr_code ||
+      data.pix?.emv ||
+      data.pix?.copy_paste ||
+      data.qr_code ||
+      data.emv ||
+      undefined;
+
+    const pixQrCodeImage =
+      data.pix?.qr_code_url ||
+      data.pix?.qr_code_image ||
+      data.pix?.base64 ||
+      data.qr_code_url ||
+      data.qr_code_image ||
+      undefined;
+
+    if (response.ok && data.success !== false) {
       return {
         success: true,
         checkoutUrl: data.checkout_url || data.pix?.url || CHECKOUT_URL,
         orderId: data.transaction_hash || data.id || data.hash,
+        pixQrCode,
+        pixQrCodeImage,
+        pixAmount: payload.totalPrice,
       };
     }
 
-    console.warn('ZeroOnePay API response:', data);
-    // Mesmo com erro de API, redireciona para o checkout da oferta
-    return { success: true, checkoutUrl: CHECKOUT_URL };
+    console.warn('ZeroOnePay API response error:', data);
+    // Mesmo com erro de API, retorna para exibir tela de sucesso
+    return {
+      success: true,
+      checkoutUrl: CHECKOUT_URL,
+      pixQrCode,
+      pixQrCodeImage,
+      pixAmount: payload.totalPrice,
+    };
   } catch (err) {
     console.error('ZeroOnePay API error:', err);
-    // Fallback: redireciona para o checkout direto da oferta
-    return { success: true, checkoutUrl: CHECKOUT_URL };
+    return { success: true, checkoutUrl: CHECKOUT_URL, pixAmount: payload.totalPrice };
   }
 };
 
