@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield, Loader2 } from 'lucide-react';
+import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield, Loader2, Copy, CheckCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { createZeroOnePayOrder, CHECKOUT_URL } from '@/lib/wbuyApi';
+import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
 
 const CartDrawer: React.FC = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
-  const [step, setStep] = useState<'cart' | 'form' | 'success'>('cart');
+  const [step, setStep] = useState<'cart' | 'form' | 'pix'>('cart');
   const [form, setForm] = useState({ name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [pixResult, setPixResult] = useState<ZeroOnePayResult | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const pixTotal = (totalPrice * 0.9).toFixed(2).replace('.', ',');
   const pixDiscount = (totalPrice * 0.1).toFixed(2).replace('.', ',');
@@ -47,23 +49,39 @@ const CartDrawer: React.FC = () => {
         })),
         totalPrice: parseFloat((totalPrice * 0.9).toFixed(2)),
       });
-      // Redireciona para o checkout da ZeroOnePay
-      window.open(result.checkoutUrl, '_blank');
+      setPixResult(result);
+      clearCart();
+      setStep('pix');
     } catch (err) {
-      console.error('wBuy order error:', err);
+      console.error('ZeroOnePay order error:', err);
+      setStep('pix');
     } finally {
       setLoading(false);
-      setStep('success');
-      clearCart();
+    }
+  };
+
+  const handleCopy = () => {
+    if (pixResult?.pixQrCode) {
+      navigator.clipboard.writeText(pixResult.pixQrCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
     }
   };
 
   const handleClose = () => {
     closeCart();
-    setTimeout(() => { setStep('cart'); setForm({ name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '' }); setErrors({}); }, 300);
+    setTimeout(() => {
+      setStep('cart');
+      setForm({ name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '' });
+      setErrors({});
+      setPixResult(null);
+      setCopied(false);
+    }, 300);
   };
 
   if (!isOpen) return null;
+
+  const stepTitle = step === 'pix' ? 'PAGAR VIA PIX' : step === 'form' ? 'SEUS DADOS' : `CARRINHO (${totalItems})`;
 
   return (
     <>
@@ -77,9 +95,7 @@ const CartDrawer: React.FC = () => {
         <div className="bg-black text-white px-5 py-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-3">
             <ShoppingBag size={20} className="text-[#f39b19]" />
-            <span className="font-black uppercase tracking-widest text-sm">
-              {step === 'success' ? 'PEDIDO CONFIRMADO' : step === 'form' ? 'SEUS DADOS' : `CARRINHO (${totalItems})`}
-            </span>
+            <span className="font-black uppercase tracking-widest text-sm">{stepTitle}</span>
           </div>
           <button onClick={handleClose} className="hover:text-[#f39b19] transition-colors">
             <X size={20} />
@@ -87,7 +103,7 @@ const CartDrawer: React.FC = () => {
         </div>
 
         {/* PIX banner */}
-        {step !== 'success' && (
+        {step !== 'pix' && (
           <div className="bg-green-600 px-4 py-2 flex items-center justify-center gap-2 flex-shrink-0">
             <QrCode size={13} className="text-white" />
             <span className="text-white text-[10px] font-black uppercase tracking-widest">PIX · 10% de desconto</span>
@@ -96,33 +112,79 @@ const CartDrawer: React.FC = () => {
 
         <div className="flex-1 overflow-y-auto">
 
-          {/* SUCCESS */}
-          {step === 'success' && (
-            <div className="flex flex-col items-center justify-center py-14 px-8 text-center">
-              <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-6">
-                <Check size={40} className="text-white" />
+          {/* PIX STEP */}
+          {step === 'pix' && (
+            <div className="flex flex-col items-center py-8 px-6 text-center">
+              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
+                <QrCode size={32} className="text-white" />
               </div>
-              <h3 className="text-2xl font-black uppercase mb-2">Pedido Recebido!</h3>
-              <p className="text-gray-500 text-sm mb-6">Envie o comprovante do PIX pelo WhatsApp para confirmar seu pedido.</p>
-              <div className="w-full bg-green-50 border border-green-200 p-4 mb-5 text-left">
-                <div className="flex items-center gap-2 mb-2">
-                  <QrCode size={15} className="text-green-700" />
-                  <span className="text-green-700 font-black text-xs uppercase">Chave PIX</span>
+              <h3 className="text-xl font-black uppercase mb-1">PIX Gerado!</h3>
+              <p className="text-gray-500 text-xs mb-6">Escaneie o QR Code ou copie o código para pagar</p>
+
+              {/* QR Code Image */}
+              {pixResult?.pixQrCodeImage ? (
+                <div className="w-48 h-48 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
+                  <img
+                    src={pixResult.pixQrCodeImage.startsWith('data:') ? pixResult.pixQrCodeImage : `data:image/png;base64,${pixResult.pixQrCodeImage}`}
+                    alt="QR Code PIX"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <p className="text-gray-500 text-[11px] mb-1">Chave aleatória:</p>
-                <p className="font-black text-sm text-gray-800 break-all">sua-chave-pix@aqui.com</p>
-                <p className="text-gray-500 text-[11px] mt-2">Valor a pagar:</p>
-                <p className="font-black text-xl text-green-700">R$ {pixTotal}</p>
+              ) : (
+                <div className="w-48 h-48 mb-5 border-4 border-green-500 bg-green-50 flex flex-col items-center justify-center gap-2">
+                  <QrCode size={64} className="text-green-400" />
+                  <span className="text-green-600 text-[10px] font-bold uppercase">QR Code PIX</span>
+                </div>
+              )}
+
+              {/* Valor */}
+              <div className="w-full bg-green-50 border border-green-200 p-3 mb-4 text-center">
+                <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Valor a pagar (PIX com 10% off)</p>
+                <p className="font-black text-2xl text-green-700">R$ {pixTotal}</p>
               </div>
+
+              {/* Copia e cola */}
+              {pixResult?.pixQrCode ? (
+                <div className="w-full mb-5">
+                  <p className="text-[10px] font-bold uppercase text-gray-500 mb-2 text-left">Código PIX Copia e Cola</p>
+                  <div className="bg-gray-50 border border-gray-200 p-3 text-left mb-2">
+                    <p className="text-[10px] text-gray-600 break-all font-mono leading-relaxed">{pixResult.pixQrCode}</p>
+                  </div>
+                  <button
+                    onClick={handleCopy}
+                    className={`w-full py-3 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors ${
+                      copied ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-[#f39b19]'
+                    }`}
+                  >
+                    {copied ? <><CheckCheck size={14} /> Copiado!</> : <><Copy size={14} /> Copiar Código PIX</>}
+                  </button>
+                </div>
+              ) : (
+                <div className="w-full mb-5">
+                  <p className="text-xs text-gray-500 mb-3">Para pagar, acesse o checkout completo:</p>
+                  <a
+                    href={pixResult?.checkoutUrl || '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-green-600 text-white py-3 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
+                  >
+                    <QrCode size={14} /> Abrir PIX para Pagar
+                  </a>
+                </div>
+              )}
+
               <a
                 href="https://api.whatsapp.com/send?phone=551121154200"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full bg-[#25d366] text-white py-3 font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors"
+                className="w-full bg-[#25d366] text-white py-3 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#1da851] transition-colors mb-3"
               >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.52a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z"/>
+                </svg>
                 Enviar comprovante no WhatsApp
               </a>
-              <button onClick={handleClose} className="mt-3 text-xs text-gray-400 underline">Fechar</button>
+              <button onClick={handleClose} className="text-xs text-gray-400 underline">Fechar</button>
             </div>
           )}
 
@@ -283,9 +345,9 @@ const CartDrawer: React.FC = () => {
                   className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? (
-                    <><Loader2 size={14} className="animate-spin" /> Processando...</>
+                    <><Loader2 size={14} className="animate-spin" /> Gerando PIX...</>
                   ) : (
-                    'Finalizar Pedido ✓'
+                    'Gerar PIX ✓'
                   )}
                 </button>
               </div>
