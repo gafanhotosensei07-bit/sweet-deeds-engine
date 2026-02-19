@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Truck, Shield, QrCode, Check } from 'lucide-react';
+import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { createWbuyOrder } from '@/lib/wbuyApi';
 
 export interface CheckoutProduct {
   id: number;
@@ -28,6 +29,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
   if (!product) return null;
 
@@ -59,7 +61,29 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
       onClose();
     }
   };
-  const handleFinish = () => { if (validate()) setStep('success'); };
+
+  const handleFinish = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await createWbuyOrder({
+        customer: form,
+        items: [{
+          name: product.name,
+          price: product.price,
+          size: selectedSize,
+          quantity,
+          image: product.image,
+        }],
+        totalPrice: parseFloat((basePrice * 0.9 * quantity).toFixed(2)),
+      });
+    } catch (err) {
+      console.error('wBuy order error:', err);
+    } finally {
+      setLoading(false);
+      setStep('success');
+    }
+  };
 
   const maskPhone = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').slice(0, 15);
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4').slice(0, 14);
@@ -340,8 +364,15 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 >← Voltar</button>
                 <button
                   onClick={handleFinish}
-                  className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors"
-                >Finalizar Pedido ✓</button>
+                  disabled={loading}
+                  className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <><Loader2 size={14} className="animate-spin" /> Processando...</>
+                  ) : (
+                    'Finalizar Pedido ✓'
+                  )}
+                </button>
               </div>
             </div>
           )}
