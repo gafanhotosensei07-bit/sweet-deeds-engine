@@ -46,7 +46,7 @@ Deno.serve(async (req) => {
       cart: items.map((item: { name: string; quantity: number; price: string; size: string }) => ({
         name: `${item.name} - Tam. ${item.size}`,
         quantity: item.quantity,
-        unit_price: Math.round(parseFloat(String(item.price).replace(',', '.')) * 100),
+        price: Math.round(parseFloat(String(item.price).replace(',', '.')) * 100),
       })),
     };
 
