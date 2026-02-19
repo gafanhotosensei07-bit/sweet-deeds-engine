@@ -13,16 +13,16 @@ import tnTripleWhite from '@/assets/tn-triple-white-real.jpg';
 import tnGreedy from '@/assets/tn-greedy-real.jpg';
 
 const tnProducts: CheckoutProduct[] = [
-  { id: 201, name: 'AIR MAX PLUS TRIPLE BLACK', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnTripleBlack, discount: '-57%' },
-  { id: 202, name: 'AIR MAX PLUS SUNSET', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnSunset, discount: '-57%' },
-  { id: 203, name: 'AIR MAX PLUS BLUE GRADIENT', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnBlueGradient, discount: '-57%' },
-  { id: 204, name: 'AIR MAX PLUS DRIFT "BRED"', oldPrice: '449,90', price: '189,90', installments: '17,26', image: tnDrift, discount: '-57%' },
-  { id: 205, name: 'AIR MAX PLUS UTILITY', oldPrice: '419,90', price: '179,90', installments: '16,35', image: tnUtility, discount: '-57%' },
-  { id: 206, name: 'AIR MAX PLUS "HYPER BLUE"', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnHyperBlue, discount: '-57%' },
-  { id: 207, name: 'AIR MAX PLUS "UNIVERSITY RED"', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnUniversityRed, discount: '-57%' },
-  { id: 208, name: 'AIR MAX PLUS "VOLTAGE PURPLE"', oldPrice: '449,90', price: '189,90', installments: '17,26', image: tnVoltagePurple, discount: '-57%' },
-  { id: 209, name: 'AIR MAX PLUS "TRIPLE WHITE"', oldPrice: '399,90', price: '169,90', installments: '15,44', image: tnTripleWhite, discount: '-57%' },
-  { id: 210, name: 'AIR MAX PLUS SE "GREEDY"', oldPrice: '499,90', price: '209,90', installments: '19,08', image: tnGreedy, discount: '-58%' },
+  { id: 201, name: 'AIR MAX PLUS TRIPLE BLACK', oldPrice: '179,90', price: '99,90', installments: '9,08', image: tnTripleBlack, discount: '-44%' },
+  { id: 202, name: 'AIR MAX PLUS SUNSET', oldPrice: '169,90', price: '84,90', installments: '7,71', image: tnSunset, discount: '-50%' },
+  { id: 203, name: 'AIR MAX PLUS BLUE GRADIENT', oldPrice: '189,90', price: '109,90', installments: '9,99', image: tnBlueGradient, discount: '-42%' },
+  { id: 204, name: 'AIR MAX PLUS DRIFT "BRED"', oldPrice: '199,90', price: '119,90', installments: '10,90', image: tnDrift, discount: '-40%' },
+  { id: 205, name: 'AIR MAX PLUS UTILITY', oldPrice: '179,90', price: '94,90', installments: '8,62', image: tnUtility, discount: '-47%' },
+  { id: 206, name: 'AIR MAX PLUS "HYPER BLUE"', oldPrice: '169,90', price: '79,90', installments: '7,26', image: tnHyperBlue, discount: '-53%' },
+  { id: 207, name: 'AIR MAX PLUS "UNIVERSITY RED"', oldPrice: '189,90', price: '104,90', installments: '9,53', image: tnUniversityRed, discount: '-45%' },
+  { id: 208, name: 'AIR MAX PLUS "VOLTAGE PURPLE"', oldPrice: '199,90', price: '114,90', installments: '10,44', image: tnVoltagePurple, discount: '-43%' },
+  { id: 209, name: 'AIR MAX PLUS "TRIPLE WHITE"', oldPrice: '169,90', price: '74,90', installments: '6,80', image: tnTripleWhite, discount: '-56%' },
+  { id: 210, name: 'AIR MAX PLUS SE "GREEDY"', oldPrice: '199,90', price: '89,90', installments: '8,17', image: tnGreedy, discount: '-55%' },
 ];
 
 const TNSection: React.FC = () => {
