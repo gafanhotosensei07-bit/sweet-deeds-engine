@@ -173,29 +173,38 @@ async function handleGoatPay({ gateway, customer, cpfClean, phoneClean, cepClean
 }
 
 async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice }: any) {
+  // Estrutura exata conforme documentação SigmaPay
   const body = {
-    amount: amountInCents,
+    amount: amountInCents, // valor em centavos: R$ 20,00 = 2000
+    offer_hash: gateway.offer_hash,
     payment_method: 'pix',
     customer: {
       name: customer.name,
-      cpf: cpfClean,
-      phone: phoneClean,
       email: `${cpfClean}@cliente.com`,
-      address: {
-        zip_code: cepClean,
-        street: customer.address,
-        number: customer.number,
-        city: customer.city,
-        state: customer.state,
-      },
+      phone_number: phoneClean,
+      document: cpfClean, // CPF sem formatação
+      street_name: customer.address,
+      number: customer.number,
+      complement: '',
+      neighborhood: '',
+      city: customer.city,
+      state: customer.state,
+      zip_code: cepClean,
     },
-    items: items.map((item: any) => ({
-      name: `${item.name} - Tam. ${item.size}`,
+    cart: items.map((item: any) => ({
+      product_hash: gateway.product_id,
+      title: `${item.name} - Tam. ${item.size}`,
+      cover: null,
+      price: Math.round(parseFloat(String(item.price).replace(',', '.')) * 100),
       quantity: item.quantity,
-      unit_price: Math.round(parseFloat(String(item.price).replace(',', '.')) * 100),
+      operation_type: 1,
+      tangible: true,
     })),
-    product_id: gateway.product_id,
+    expire_in_days: 1,
+    transaction_origin: 'api',
   };
+
+  console.log('SigmaPay request amount (cents):', amountInCents);
 
   const response = await fetch(`https://api.sigmapay.com.br/api/public/v1/transactions?api_token=${gateway.api_token}`, {
     method: 'POST',
@@ -204,16 +213,27 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
   });
 
   const data = await response.json();
-  console.log('SigmaPay response:', response.status, JSON.stringify(data));
+  console.log('SigmaPay response status:', response.status);
+  console.log('SigmaPay response data:', JSON.stringify(data));
 
-  const pixQrCode = data.pix?.qr_code || data.pix?.emv || data.qr_code || undefined;
-  const pixQrCodeImage = data.pix?.qr_code_image || data.pix?.base64 || data.qr_code_url || undefined;
+  // Extrair dados PIX da resposta SigmaPay
+  const pixQrCode =
+    data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
+    data.transaction?.pix?.qr_code || data.qr_code || undefined;
+
+  const pixQrCodeImage =
+    data.pix?.qr_code_image || data.pix?.base64 || data.pix?.qr_code_url ||
+    data.transaction?.pix?.qr_code_image || data.qr_code_url || undefined;
+
+  const checkoutUrl = gateway.offer_hash
+    ? `https://go.sigmapay.com.br/${gateway.offer_hash}`
+    : data.checkout_url || '';
 
   return {
     success: true,
     gateway: 'SigmaPay',
-    checkoutUrl: data.checkout_url || '',
-    orderId: data.id || data.transaction_id,
+    checkoutUrl: data.checkout_url || checkoutUrl,
+    orderId: data.id || data.transaction_id || data.hash,
     pixQrCode,
     pixQrCodeImage,
     pixAmount: totalPrice,
