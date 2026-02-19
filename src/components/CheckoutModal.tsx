@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, ShoppingBag, Truck, Shield, QrCode, Check } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
 
 export interface CheckoutProduct {
   id: number;
@@ -19,6 +20,7 @@ interface CheckoutModalProps {
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
+  const { addItem } = useCart();
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [step, setStep] = useState<'product' | 'form' | 'success'>('product');
@@ -51,7 +53,12 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleNext = () => { if (validate()) setStep('form'); };
+  const handleNext = () => {
+    if (validate()) {
+      addItem(product, selectedSize, quantity);
+      onClose();
+    }
+  };
   const handleFinish = () => { if (validate()) setStep('success'); };
 
   const maskPhone = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').slice(0, 15);

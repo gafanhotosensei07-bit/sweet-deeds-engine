@@ -1,6 +1,8 @@
 import React from 'react';
+import { useCart } from '@/context/CartContext';
 
 const Header: React.FC = () => {
+  const { totalItems, openCart } = useCart();
   return (
     <header className="w-full">
       {/* Top Bar */}
@@ -24,12 +26,14 @@ const Header: React.FC = () => {
                 className="h-12 md:h-16"
               />
             </a>
-            <div className="md:hidden relative">
-              <span className="absolute -top-2 -right-2 bg-[#f39b19] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            <button onClick={openCart} className="md:hidden relative">
+              {totalItems > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#f39b19] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-black">{totalItems}</span>
+              )}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
               </svg>
-            </div>
+            </button>
           </div>
 
           <div className="flex-1 max-w-xl w-full">
@@ -53,7 +57,7 @@ const Header: React.FC = () => {
               <a href="#" className="text-[#f39b19]">(11) 2115-4200</a>
             </div>
             <div className="flex items-center gap-2">
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
               <div className="text-xs">
@@ -61,6 +65,21 @@ const Header: React.FC = () => {
                 <p className="font-bold">cadastre-se</p>
               </div>
             </div>
+            {/* Cart button desktop */}
+            <button onClick={openCart} className="relative flex items-center gap-2 hover:text-[#f39b19] transition-colors">
+              <div className="relative">
+                {totalItems > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-[#f39b19] text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-black">{totalItems}</span>
+                )}
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <div className="text-xs text-left">
+                <p className="text-gray-500">Meu</p>
+                <p className="font-bold">Carrinho</p>
+              </div>
+            </button>
           </div>
         </div>
       </div>
