@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { createWbuyOrder } from '@/lib/wbuyApi';
+import { createZeroOnePayOrder, CHECKOUT_URL } from '@/lib/wbuyApi';
 
 export interface CheckoutProduct {
   id: number;
@@ -66,7 +66,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     if (!validate()) return;
     setLoading(true);
     try {
-      await createWbuyOrder({
+      const result = await createZeroOnePayOrder({
         customer: form,
         items: [{
           name: product.name,
@@ -77,6 +77,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
         }],
         totalPrice: parseFloat((basePrice * 0.9 * quantity).toFixed(2)),
       });
+      // Redireciona para o checkout da ZeroOnePay
+      window.open(result.checkoutUrl, '_blank');
     } catch (err) {
       console.error('wBuy order error:', err);
     } finally {
