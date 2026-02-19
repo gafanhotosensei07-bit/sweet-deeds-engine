@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield } from 'lucide-react';
+import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { createWbuyOrder } from '@/lib/wbuyApi';
 
 const CartDrawer: React.FC = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
   const [step, setStep] = useState<'cart' | 'form' | 'success'>('cart');
   const [form, setForm] = useState({ name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
 
   const pixTotal = (totalPrice * 0.9).toFixed(2).replace('.', ',');
   const pixDiscount = (totalPrice * 0.1).toFixed(2).replace('.', ',');
@@ -30,8 +32,25 @@ const CartDrawer: React.FC = () => {
     return Object.keys(e).length === 0;
   };
 
-  const handleFinish = () => {
-    if (validate()) {
+  const handleFinish = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await createWbuyOrder({
+        customer: form,
+        items: items.map(item => ({
+          name: item.product.name,
+          price: item.product.price,
+          size: item.size,
+          quantity: item.quantity,
+          image: item.product.image,
+        })),
+        totalPrice: parseFloat((totalPrice * 0.9).toFixed(2)),
+      });
+    } catch (err) {
+      console.error('wBuy order error:', err);
+    } finally {
+      setLoading(false);
       setStep('success');
       clearCart();
     }
@@ -258,8 +277,15 @@ const CartDrawer: React.FC = () => {
                 >← Voltar</button>
                 <button
                   onClick={handleFinish}
-                  className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors"
-                >Finalizar Pedido ✓</button>
+                  disabled={loading}
+                  className="flex-[2] bg-black text-white py-3.5 font-black uppercase tracking-widest text-xs hover:bg-[#f39b19] transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <><Loader2 size={14} className="animate-spin" /> Processando...</>
+                  ) : (
+                    'Finalizar Pedido ✓'
+                  )}
+                </button>
               </div>
             </div>
           )}
