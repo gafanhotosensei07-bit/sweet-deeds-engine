@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
+import { useCart } from '@/context/CartContext';
 
 import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
 import tnSunset from '@/assets/tn-sunset-final.jpg';

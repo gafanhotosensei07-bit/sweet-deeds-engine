@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
+import { useCart } from '@/context/CartContext';
 
 interface Product {
   id: number;
