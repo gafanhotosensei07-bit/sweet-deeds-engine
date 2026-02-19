@@ -1,10 +1,14 @@
-// wBuy API Integration
-// Docs: https://sistema.sistemawbuy.com.br/api/v1
+// ZeroOnePay API Integration
+// Docs: https://docs.zeroonepay.com.br
+// Base URL: https://api.zeroonepay.com.br/api/public/v1
 
-const WBUY_API_BASE = 'https://sistema.sistemawbuy.com.br/api/v1';
-const WBUY_API_KEY = '6aLIlUuOKq0SnOpNYV2y93vKF9SqNVixsdz3arjQ7GqhhhNrmHUnBrZQh0kK';
-const PRODUCT_CODE = 'dv4dkj9lcg';
-const OFFER_CODE = 'xcfh4s38y';
+const ZEROONEPAY_API_BASE = 'https://api.zeroonepay.com.br/api/public/v1';
+const ZEROONEPAY_API_TOKEN = '6aLIlUuOKq0SnOpNYV2y93vKF9SqNVixsdz3arjQ7GqhhhNrmHUnBrZQh0kK';
+const PRODUCT_HASH = 'dv4dkj9lcg';
+const OFFER_HASH = 'rxcfh4s38y';
+
+// URL direta do checkout da oferta (descoberta via API)
+export const CHECKOUT_URL = `https://go.zeroonepay.com.br/${OFFER_HASH}`;
 
 export interface WbuyOrderItem {
   name: string;
@@ -28,86 +32,75 @@ export interface WbuyCustomerData {
 export interface WbuyOrderPayload {
   customer: WbuyCustomerData;
   items: WbuyOrderItem[];
-  totalPrice: number; // valor com desconto PIX
+  totalPrice: number; // valor com desconto PIX (em reais)
 }
 
-export const createWbuyOrder = async (payload: WbuyOrderPayload): Promise<{ success: boolean; orderId?: string; checkoutUrl?: string; error?: string }> => {
+export const createZeroOnePayOrder = async (
+  payload: WbuyOrderPayload
+): Promise<{ success: boolean; checkoutUrl: string; orderId?: string; error?: string }> => {
   try {
     const cpfClean = payload.customer.cpf.replace(/\D/g, '');
     const phoneClean = payload.customer.phone.replace(/\D/g, '');
     const cepClean = payload.customer.cep.replace(/\D/g, '');
+    const amountInCents = Math.round(payload.totalPrice * 100);
 
-    const orderBody = {
-      chave_api: WBUY_API_KEY,
-      codigo_produto: PRODUCT_CODE,
-      codigo_oferta: OFFER_CODE,
-      nome: payload.customer.name,
-      cpf: cpfClean,
-      telefone: phoneClean,
-      cep: cepClean,
-      endereco: payload.customer.address,
-      numero: payload.customer.number,
-      cidade: payload.customer.city,
-      estado: payload.customer.state,
-      valor_total: payload.totalPrice,
-      forma_pagamento: 'pix',
-      itens: payload.items.map(item => ({
-        codigo: PRODUCT_CODE,
-        oferta: OFFER_CODE,
-        nome: item.name,
-        quantidade: item.quantity,
-        valor_unitario: parseFloat(item.price.replace(',', '.')),
-        tamanho: item.size,
+    const body = {
+      api_token: ZEROONEPAY_API_TOKEN,
+      product_hash: PRODUCT_HASH,
+      offer_hash: OFFER_HASH,
+      amount: amountInCents,
+      payment_method: 'pix',
+      customer: {
+        name: payload.customer.name,
+        cpf: cpfClean,
+        phone: phoneClean,
+        email: `${cpfClean}@cliente.com`, // fallback pois não coletamos email
+        address: {
+          zip_code: cepClean,
+          street: payload.customer.address,
+          number: payload.customer.number,
+          city: payload.customer.city,
+          state: payload.customer.state,
+        },
+      },
+      items: payload.items.map(item => ({
+        name: item.name,
+        quantity: item.quantity,
+        unit_price: Math.round(parseFloat(item.price.replace(',', '.')) * 100),
+        size: item.size,
       })),
     };
 
-    const response = await fetch(`${WBUY_API_BASE}/order`, {
+    const response = await fetch(`${ZEROONEPAY_API_BASE}/transactions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${WBUY_API_KEY}`,
+        Accept: 'application/json',
       },
-      body: JSON.stringify(orderBody),
+      body: JSON.stringify(body),
     });
 
     const data = await response.json();
 
-    if (response.ok && (data.code === '000' || data.responseCode === 200 || data.id || data.order_id)) {
+    if (response.ok && (data.success !== false)) {
       return {
         success: true,
-        orderId: data.id || data.order_id || data.data?.id,
-        checkoutUrl: data.checkout_url || data.data?.checkout_url,
+        checkoutUrl: data.checkout_url || data.pix?.url || CHECKOUT_URL,
+        orderId: data.transaction_hash || data.id || data.hash,
       };
     }
 
-    // Tenta endpoint alternativo de pedidos diretos
-    const response2 = await fetch(`${WBUY_API_BASE}/order/direct`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${WBUY_API_KEY}`,
-      },
-      body: JSON.stringify(orderBody),
-    });
-
-    const data2 = await response2.json();
-
-    if (response2.ok || data2.code === '000' || data2.id) {
-      return {
-        success: true,
-        orderId: data2.id || data2.data?.id,
-        checkoutUrl: data2.checkout_url || data2.data?.checkout_url,
-      };
-    }
-
-    console.warn('wBuy API response:', data2);
-    // Even if API returns error, we succeed locally and log it
-    return { success: true };
+    console.warn('ZeroOnePay API response:', data);
+    // Mesmo com erro de API, redireciona para o checkout da oferta
+    return { success: true, checkoutUrl: CHECKOUT_URL };
   } catch (err) {
-    console.error('wBuy API error:', err);
-    // Don't block user experience on API failure
-    return { success: true };
+    console.error('ZeroOnePay API error:', err);
+    // Fallback: redireciona para o checkout direto da oferta
+    return { success: true, checkoutUrl: CHECKOUT_URL };
   }
 };
 
-export { PRODUCT_CODE, OFFER_CODE, WBUY_API_KEY };
+// Alias para compatibilidade com código existente
+export const createWbuyOrder = createZeroOnePayOrder;
+
+export { PRODUCT_HASH, OFFER_HASH, ZEROONEPAY_API_TOKEN };
