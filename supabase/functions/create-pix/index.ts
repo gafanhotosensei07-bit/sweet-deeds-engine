@@ -120,16 +120,16 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
   console.log('ZeroOnePay response status:', response.status);
   console.log('ZeroOnePay response data:', JSON.stringify(data));
 
+  // ZeroOnePay usa pix.pix_qr_code (igual SigmaPay)
   const pixQrCode =
-    data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste || data.pix?.code ||
-    data.qr_code || data.emv || data.code ||
-    data.transaction?.pix?.qr_code || data.transaction?.pix?.emv || data.transaction?.qr_code ||
+    data.pix?.pix_qr_code || data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
+    data.qr_code || data.emv ||
+    data.transaction?.pix?.pix_qr_code || data.transaction?.pix?.qr_code ||
     undefined;
 
   let pixQrCodeImage =
-    data.pix?.qr_code_url || data.pix?.qr_code_image || data.pix?.base64 || data.pix?.image ||
+    data.pix?.qr_code_base64 || data.pix?.qr_code_url || data.pix?.qr_code_image || data.pix?.base64 ||
     data.qr_code_url || data.qr_code_image ||
-    data.transaction?.pix?.qr_code_url || data.transaction?.pix?.base64 ||
     undefined;
 
   // Se a API não retornou imagem, gerar localmente a partir do código EMV
@@ -144,7 +144,8 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
     orderId: data.transaction_hash || data.id || data.hash || data.transaction?.hash,
     pixQrCode,
     pixQrCodeImage,
-    pixAmount: totalPrice,
+    // amount da API vem em centavos → converter para reais
+    pixAmount: data.amount ? data.amount / 100 : totalPrice,
   };
 }
 
@@ -266,6 +267,7 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
     orderId: data.id || data.transaction_id || data.hash,
     pixQrCode,
     pixQrCodeImage,
-    pixAmount: totalPrice,
+    // amount da API vem em centavos → converter para reais
+    pixAmount: data.amount ? data.amount / 100 : totalPrice,
   };
 }
