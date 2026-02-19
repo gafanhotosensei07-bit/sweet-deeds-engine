@@ -6,6 +6,7 @@ import { Check, ShoppingBag, Tag, Zap } from 'lucide-react';
 import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
 import tnSunset from '@/assets/tn-sunset-final.jpg';
 import tnBlueGradient from '@/assets/tn-blue-gradient-final.png';
+import tnDrift from '@/assets/tn-drift-bred-final.jpg';
 
 const COMBO_PRODUCTS: CheckoutProduct[] = [
   { id: 1, name: 'AIR FORCE NOBOOK PRETO', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851bcdf477b4/56912e4c305e752e5678b2ceb0c002ad-6851bd732581d_mini.jpg', discount: '-57%' },
@@ -19,6 +20,7 @@ const COMBO_PRODUCTS: CheckoutProduct[] = [
   { id: 9, name: 'AIR MAX PLUS TRIPLE BLACK', oldPrice: '179,90', price: '99,90', installments: '9,08', image: tnTripleBlack, discount: '-44%' },
   { id: 10, name: 'AIR MAX PLUS SUNSET', oldPrice: '169,90', price: '84,90', installments: '7,71', image: tnSunset, discount: '-50%' },
   { id: 11, name: 'AIR MAX PLUS BLUE GRADIENT', oldPrice: '189,90', price: '109,90', installments: '9,99', image: tnBlueGradient, discount: '-42%' },
+  { id: 12, name: 'AIR MAX PLUS DRIFT "BRED"', oldPrice: '199,90', price: '119,90', installments: '10,90', image: tnDrift, discount: '-40%' },
 ];
 
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
