@@ -52,10 +52,15 @@ const Header: React.FC = () => {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <div className="text-sm">
-              <p className="font-bold">Precisa de ajuda?</p>
-              <a href="#" className="text-[#f39b19]">(11) 2115-4200</a>
-            </div>
+            <button
+              onClick={() => document.querySelector<HTMLButtonElement>('[aria-label="Suporte"]')?.click()}
+              className="flex items-center gap-2 bg-[#f39b19] text-black px-4 py-2 font-black text-xs uppercase tracking-widest hover:bg-black hover:text-white transition-colors rounded-sm"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a5 5 0 0 0-5 5v1h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6a1 1 0 1 1 0-2 6 6 0 1 1 12 0 1 1 0 1 1 0 2v4a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H9a1 1 0 0 1 0-2h1v-1H8z"/>
+              </svg>
+              Suporte
+            </button>
             <div className="flex items-center gap-2">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
