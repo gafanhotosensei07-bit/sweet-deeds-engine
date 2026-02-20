@@ -45,7 +45,7 @@ const TNSection: React.FC = () => {
 
   return (
     <>
-      <section className="bg-black py-16">
+      <section id="section-tn" className="bg-black py-16">
         {/* Hero Banner */}
         <div className="container mx-auto px-4 mb-12">
           <div className="flex flex-col items-center text-center">
