@@ -19,11 +19,13 @@ import { trackEvent } from './lib/analytics';
 
 const Store: React.FC = () => {
   useEffect(() => {
-    // Deduplicação: só tracka 1 page_view por sessão do navegador
-    const key = 'we_pv_tracked';
-    if (!sessionStorage.getItem(key)) {
+    // Deduplicação: 1 page_view por janela de 30 minutos por navegador
+    const key = 'we_pv_ts';
+    const TTL = 30 * 60 * 1000; // 30 minutos
+    const last = parseInt(localStorage.getItem(key) || '0', 10);
+    if (Date.now() - last > TTL) {
       trackEvent('page_view');
-      sessionStorage.setItem(key, '1');
+      localStorage.setItem(key, String(Date.now()));
     }
   }, []);
 
