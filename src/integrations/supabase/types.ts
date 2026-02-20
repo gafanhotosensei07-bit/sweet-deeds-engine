@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          amount: number | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          order_id: string | null
+          product_name: string | null
+          product_price: number | null
+          session_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          product_name?: string | null
+          product_price?: number | null
+          session_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          order_id?: string | null
+          product_name?: string | null
+          product_price?: number | null
+          session_id?: string | null
+        }
+        Relationships: []
+      }
       gateway_settings: {
         Row: {
           api_token: string

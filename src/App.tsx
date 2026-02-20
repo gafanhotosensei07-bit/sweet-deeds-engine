@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -14,28 +14,34 @@ import CartDrawer from './components/CartDrawer';
 import SupportChat from './components/SupportChat';
 import { CartProvider } from './context/CartContext';
 import Admin from './pages/Admin';
+import { trackEvent } from './lib/analytics';
 
-const Store: React.FC = () => (
-  <CartProvider>
-    <div className="min-h-screen bg-white font-['Maven_Pro',sans-serif]">
-      <Header />
-      <main>
-        <Hero />
-        <Banners />
-        <TNSection />
-        <FemininoSection />
-        <MasculinoSection />
-        <KidsSection />
-        <ComboSection />
-        <ProductGrid title="MAIS VENDIDOS DO DIA" />
-      </main>
-      <Footer />
-      <CartDrawer />
-      <SupportChat />
-    </div>
-  </CartProvider>
-);
+const Store: React.FC = () => {
+  useEffect(() => {
+    trackEvent('page_view');
+  }, []);
 
+  return (
+    <CartProvider>
+      <div className="min-h-screen bg-white font-['Maven_Pro',sans-serif]">
+        <Header />
+        <main>
+          <Hero />
+          <Banners />
+          <TNSection />
+          <FemininoSection />
+          <MasculinoSection />
+          <KidsSection />
+          <ComboSection />
+          <ProductGrid title="MAIS VENDIDOS DO DIA" />
+        </main>
+        <Footer />
+        <CartDrawer />
+        <SupportChat />
+      </div>
+    </CartProvider>
+  );
+};
 
 function App() {
   return (
@@ -49,4 +55,3 @@ function App() {
 }
 
 export default App;
-
