@@ -19,7 +19,12 @@ import { trackEvent } from './lib/analytics';
 
 const Store: React.FC = () => {
   useEffect(() => {
-    trackEvent('page_view');
+    // Deduplicação: só tracka 1 page_view por sessão do navegador
+    const key = 'we_pv_tracked';
+    if (!sessionStorage.getItem(key)) {
+      trackEvent('page_view');
+      sessionStorage.setItem(key, '1');
+    }
   }, []);
 
   return (
