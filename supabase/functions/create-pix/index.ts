@@ -32,15 +32,14 @@ Deno.serve(async (req) => {
   try {
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Buscar gateway ativo do banco
-    const { data: gateway, error: gwError } = await supabase
+    // Buscar TODOS os gateways cadastrados (ativo primeiro, depois os demais como fallback)
+    const { data: gateways, error: gwError } = await supabase
       .from('gateway_settings')
       .select('*')
-      .eq('is_active', true)
-      .single();
+      .order('is_active', { ascending: false }); // ativo primeiro
 
-    if (gwError || !gateway) {
-      throw new Error('Nenhum gateway ativo encontrado');
+    if (gwError || !gateways || gateways.length === 0) {
+      throw new Error('Nenhum gateway cadastrado encontrado');
     }
 
     const { customer, items, totalPrice } = await req.json();
@@ -50,21 +49,53 @@ Deno.serve(async (req) => {
     const cepClean = customer.cep.replace(/\D/g, '');
     const amountInCents = Math.round(totalPrice * 100);
 
-    let result;
+    const errors: string[] = [];
 
-    if (gateway.gateway_name === 'ZeroOnePay') {
-      result = await handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
-    } else if (gateway.gateway_name === 'GoatPay') {
-      result = await handleGoatPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
-    } else if (gateway.gateway_name === 'SigmaPay') {
-      result = await handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
-    } else {
-      throw new Error(`Gateway '${gateway.gateway_name}' não suportado`);
+    // Tenta cada gateway em ordem (ativo primeiro, depois fallbacks)
+    for (const gateway of gateways) {
+      console.log(`Tentando gateway: ${gateway.gateway_name} (ativo: ${gateway.is_active})`);
+
+      try {
+        let result;
+
+        if (gateway.gateway_name === 'ZeroOnePay') {
+          result = await handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
+        } else if (gateway.gateway_name === 'GoatPay') {
+          result = await handleGoatPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
+        } else if (gateway.gateway_name === 'SigmaPay') {
+          result = await handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice });
+        } else {
+          console.warn(`Gateway '${gateway.gateway_name}' não suportado, pulando...`);
+          errors.push(`${gateway.gateway_name}: não suportado`);
+          continue;
+        }
+
+        // Verifica se o resultado tem dados PIX válidos
+        if (result && (result.pixQrCode || result.pixQrCodeImage || result.checkoutUrl)) {
+          console.log(`✅ Gateway ${gateway.gateway_name} funcionou com sucesso!`);
+          return new Response(JSON.stringify({ ...result, usedGateway: gateway.gateway_name }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+
+        const msg = `${gateway.gateway_name}: resposta sem dados PIX válidos`;
+        console.warn(msg);
+        errors.push(msg);
+
+      } catch (gatewayErr) {
+        const msg = `${gateway.gateway_name}: ${String(gatewayErr)}`;
+        console.error(`❌ Falha no gateway ${gateway.gateway_name}:`, gatewayErr);
+        errors.push(msg);
+        // Continua para o próximo gateway
+      }
     }
 
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // Todos os gateways falharam
+    console.error('Todos os gateways falharam:', errors);
+    return new Response(
+      JSON.stringify({ success: false, error: 'Todos os gateways falharam', details: errors }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
 
   } catch (err) {
     console.error('Edge function error:', err);
@@ -116,11 +147,19 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
     body: JSON.stringify(body),
   });
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`ZeroOnePay HTTP ${response.status}: ${errorText}`);
+  }
+
   const data = await response.json();
   console.log('ZeroOnePay response status:', response.status);
   console.log('ZeroOnePay response data:', JSON.stringify(data));
 
-  // ZeroOnePay usa pix.pix_qr_code (igual SigmaPay)
+  if (data.error || data.errors || data.status === 'error') {
+    throw new Error(`ZeroOnePay API error: ${JSON.stringify(data.error || data.errors || data.message)}`);
+  }
+
   const pixQrCode =
     data.pix?.pix_qr_code || data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
     data.qr_code || data.emv ||
@@ -132,7 +171,6 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
     data.qr_code_url || data.qr_code_image ||
     undefined;
 
-  // Se a API não retornou imagem, gerar localmente a partir do código EMV
   if (!pixQrCodeImage && pixQrCode) {
     pixQrCodeImage = await generateQRCodeDataURL(pixQrCode) ?? undefined;
   }
@@ -144,7 +182,6 @@ async function handleZeroOnePay({ gateway, customer, cpfClean, phoneClean, cepCl
     orderId: data.transaction_hash || data.id || data.hash || data.transaction?.hash,
     pixQrCode,
     pixQrCodeImage,
-    // amount da API vem em centavos → converter para reais
     pixAmount: data.amount ? data.amount / 100 : totalPrice,
   };
 }
@@ -180,11 +217,24 @@ async function handleGoatPay({ gateway, customer, cpfClean, phoneClean, cepClean
     body: JSON.stringify(body),
   });
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`GoatPay HTTP ${response.status}: ${errorText}`);
+  }
+
   const data = await response.json();
   console.log('GoatPay response:', response.status, JSON.stringify(data));
 
+  if (data.error || data.errors || data.status === 'error') {
+    throw new Error(`GoatPay API error: ${JSON.stringify(data.error || data.errors || data.message)}`);
+  }
+
   const pixQrCode = data.pix?.qr_code || data.pix?.emv || data.qr_code || undefined;
-  const pixQrCodeImage = data.pix?.qr_code_image || data.pix?.base64 || data.qr_code_url || undefined;
+  let pixQrCodeImage = data.pix?.qr_code_image || data.pix?.base64 || data.qr_code_url || undefined;
+
+  if (!pixQrCodeImage && pixQrCode) {
+    pixQrCodeImage = await generateQRCodeDataURL(pixQrCode) ?? undefined;
+  }
 
   return {
     success: true,
@@ -198,16 +248,15 @@ async function handleGoatPay({ gateway, customer, cpfClean, phoneClean, cepClean
 }
 
 async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClean, items, amountInCents, totalPrice }: any) {
-  // Estrutura exata conforme documentação SigmaPay
   const body = {
-    amount: amountInCents, // valor em centavos: R$ 20,00 = 2000
+    amount: amountInCents,
     offer_hash: gateway.offer_hash,
     payment_method: 'pix',
     customer: {
       name: customer.name,
       email: `${cpfClean}@cliente.com`,
       phone_number: phoneClean,
-      document: cpfClean, // CPF sem formatação
+      document: cpfClean,
       street_name: customer.address,
       number: customer.number,
       complement: '',
@@ -237,12 +286,19 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
     body: JSON.stringify(body),
   });
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`SigmaPay HTTP ${response.status}: ${errorText}`);
+  }
+
   const data = await response.json();
   console.log('SigmaPay response status:', response.status);
   console.log('SigmaPay response data:', JSON.stringify(data));
 
-  // Extrair dados PIX da resposta SigmaPay
-  // Campos corretos: pix.pix_qr_code (EMV) e pix.qr_code_base64 (imagem)
+  if (data.error || data.errors || data.status === 'error') {
+    throw new Error(`SigmaPay API error: ${JSON.stringify(data.error || data.errors || data.message)}`);
+  }
+
   const pixQrCode =
     data.pix?.pix_qr_code || data.pix?.qr_code || data.pix?.emv || data.pix?.copy_paste ||
     data.transaction?.pix?.pix_qr_code || data.qr_code || undefined;
@@ -251,7 +307,6 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
     data.pix?.qr_code_base64 || data.pix?.qr_code_image || data.pix?.base64 || data.pix?.qr_code_url ||
     data.transaction?.pix?.qr_code_base64 || data.qr_code_url || undefined;
 
-  // qr_code_base64 veio null da SigmaPay → gerar localmente
   if (!pixQrCodeImage && pixQrCode) {
     pixQrCodeImage = await generateQRCodeDataURL(pixQrCode) ?? undefined;
   }
@@ -267,7 +322,6 @@ async function handleSigmaPay({ gateway, customer, cpfClean, phoneClean, cepClea
     orderId: data.id || data.transaction_id || data.hash,
     pixQrCode,
     pixQrCodeImage,
-    // amount da API vem em centavos → converter para reais
     pixAmount: data.amount ? data.amount / 100 : totalPrice,
   };
 }
