@@ -148,7 +148,7 @@ const MasculinoSection: React.FC = () => {
                   <h3 className="text-white text-[10px] font-black uppercase leading-tight mb-2 line-clamp-2 flex-1">{product.name}</h3>
                   <p className="text-gray-600 text-[9px] line-through">R$ {product.oldPrice}</p>
                   <p className="text-white font-black text-base leading-none mb-0.5">R$ {product.price}</p>
-                  <p className="text-gray-500 text-[9px] mb-3">12x R$ {product.installments}</p>
+                  
                   <div className="flex gap-1">
                     <button
                       onClick={() => setCheckoutProduct(product)}

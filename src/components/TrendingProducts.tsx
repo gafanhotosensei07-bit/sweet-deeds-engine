@@ -184,9 +184,6 @@ const TrendingProducts: React.FC = () => {
               <div className="mt-auto">
                 <p className="text-gray-400 text-[10px] line-through">de R${product.oldPrice}</p>
                 <p className="text-lg font-black text-black">por R${product.price}</p>
-                <p className="text-[10px] text-gray-600 mb-3">
-                  <strong>12x</strong> de <strong>R${product.installments}</strong>
-                </p>
                 <button
                   onClick={() => setCheckoutProduct(product)}
                   className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors"

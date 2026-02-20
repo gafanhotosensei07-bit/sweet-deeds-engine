@@ -148,7 +148,7 @@ const FemininoSection: React.FC = () => {
                   <h3 className="text-xs font-black uppercase leading-tight mb-2 line-clamp-2 flex-1">{product.name}</h3>
                   <p className="text-gray-400 text-[10px] line-through">R$ {product.oldPrice}</p>
                   <p className="text-lg font-black text-black leading-none mb-0.5">R$ {product.price}</p>
-                  <p className="text-[10px] text-gray-500 mb-3">12x R$ {product.installments}</p>
+                  
                   <div className="flex gap-1">
                     <button
                       onClick={() => setCheckoutProduct(product)}
