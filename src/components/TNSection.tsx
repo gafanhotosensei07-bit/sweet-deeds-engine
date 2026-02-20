@@ -52,8 +52,8 @@ const TNSection: React.FC = () => {
             <span className="text-[#f39b19] text-[10px] font-black uppercase tracking-[0.4em] mb-4 border border-[#f39b19] px-4 py-1">
               Especialistas em
             </span>
-            <h2 className="text-white font-black uppercase leading-none mb-3" style={{ fontSize: 'clamp(3rem, 10vw, 7rem)', letterSpacing: '-0.03em' }}>
-              NIKE TN
+            <h2 className="text-white font-black uppercase leading-none mb-3" style={{ fontSize: 'clamp(2rem, 8vw, 5.5rem)', letterSpacing: '-0.03em' }}>
+              NIKE TN IMPORTADOS
             </h2>
             <p className="text-gray-400 text-xs uppercase tracking-[0.3em] mb-2">
               AIR MAX PLUS · TODOS OS MODELOS · A MELHOR SELEÇÃO
