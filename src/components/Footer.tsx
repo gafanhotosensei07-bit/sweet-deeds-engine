@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
         <div>
           <h4 className="font-bold mb-6 uppercase text-sm">Atendimento</h4>
           <ul className="text-sm space-y-3 text-gray-400">
-            <li><a href="#" className="hover:text-white">Fale pelo WhatsApp</a></li>
+            <li><a href="#" className="hover:text-white">Fale conosco</a></li>
             <li><a href="#" className="hover:text-white">Envie uma Mensagem</a></li>
             <li><a href="#" className="hover:text-white">whiteelephantsp@gmail.com</a></li>
             <li><a href="#" className="hover:text-white">Rastrear Pedido</a></li>
