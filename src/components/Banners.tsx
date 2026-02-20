@@ -16,13 +16,13 @@ const banners = [
     src: 'https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392122905-7.jpeg',
     alt: 'Modelos Femininos',
     label: 'Feminino',
-    target: 'section-mais-vendidos',
+    target: 'section-feminino',
   },
   {
     src: 'https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392123620-8.jpeg',
     alt: 'Modelos Masculinos',
     label: 'Masculino',
-    target: 'section-tn',
+    target: 'section-masculino',
   },
 ];
 
