@@ -36,9 +36,8 @@ const Banners: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+      <div className="mt-8">
         <img src="https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392124477-9.jpeg" alt="Promo 1" className="w-full rounded-lg" />
-        <img src="https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392125274-10.jpeg" alt="Promo 2" className="w-full rounded-lg" />
       </div>
     </section>
   );
