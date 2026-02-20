@@ -392,7 +392,7 @@ const KidsSection: React.FC = () => {
 
   return (
     <>
-      <section className="bg-white py-16 border-t-4 border-[#f39b19]">
+      <section id="section-kids" className="bg-white py-16 border-t-4 border-[#f39b19]">
         {/* Header */}
         <div className="container mx-auto px-4 mb-10">
           <div className="flex flex-col items-center text-center">
