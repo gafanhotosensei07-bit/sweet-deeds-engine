@@ -60,9 +60,6 @@ const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
               <h3 className="text-xs font-bold mb-2 h-8 overflow-hidden">{product.name}</h3>
               <p className="text-gray-400 text-[10px] line-through">de R${product.oldPrice}</p>
               <p className="text-lg font-black text-black">por R${product.price}</p>
-              <p className="text-[10px] text-gray-600 mb-4">
-                <strong>12x</strong> de <strong>R${product.installments}</strong>
-              </p>
               <div className="flex gap-1">
                 <button
                   onClick={() => setCheckoutProduct(product as CheckoutProduct)}

@@ -121,7 +121,7 @@ const TNSection: React.FC = () => {
                   </h3>
                   <p className="text-gray-600 text-[9px] line-through mb-0.5">R$ {product.oldPrice}</p>
                   <p className="text-white font-black text-base leading-none mb-0.5">R$ {product.price}</p>
-                  <p className="text-gray-500 text-[9px] mb-3">12x R$ {product.installments}</p>
+                  
                   <div className="flex gap-1">
                     <button
                       onClick={() => setCheckoutProduct(product)}
