@@ -33,6 +33,14 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [pixResult, setPixResult] = useState<ZeroOnePayResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const pixPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Para polling de pix_paid quando o PIX estiver exibido
+  React.useEffect(() => {
+    return () => {
+      if (pixPollRef.current) clearInterval(pixPollRef.current);
+    };
+  }, []);
 
   if (!product) return null;
 
@@ -61,17 +69,58 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const handleNext = () => {
     if (validate()) {
       addItem(product, selectedSize, quantity);
-      trackEvent('checkout_started', {
-        productName: product.name,
-        productPrice: parseFloat(product.price.replace(',', '.')),
-      });
       setStep('form');
     }
+  };
+
+  // Inicia polling para detectar pix_paid via edge function de status
+  const startPixPaidPolling = (orderId: string, pixTotal: number) => {
+    if (pixPollRef.current) clearInterval(pixPollRef.current);
+
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 40; // 40 * 15s = 10 minutos
+
+    pixPollRef.current = setInterval(async () => {
+      attempts++;
+      if (attempts > MAX_ATTEMPTS) {
+        clearInterval(pixPollRef.current!);
+        return;
+      }
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/check-pix-status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
+          body: JSON.stringify({ orderId }),
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'paid' || data.status === 'approved' || data.paid === true) {
+          clearInterval(pixPollRef.current!);
+          trackEvent('pix_paid', {
+            productName: product.name,
+            productPrice: basePrice,
+            orderId,
+            amount: pixTotal,
+          });
+        }
+      } catch {
+        // silencioso — não quebra o fluxo
+      }
+    }, 15_000); // verifica a cada 15 segundos
   };
 
   const handleFinish = async () => {
     if (!validate()) return;
     setLoading(true);
+
+    // checkout_started: tracka ao submeter os dados (momento real de intenção)
+    trackEvent('checkout_started', {
+      productName: product.name,
+      productPrice: basePrice,
+    });
+
     try {
       const pixTotal = parseFloat((basePrice * 0.9 * quantity).toFixed(2));
       const result = await createZeroOnePayOrder({
@@ -86,16 +135,25 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
         totalPrice: pixTotal,
       });
       setPixResult(result);
-      // Tracking: PIX gerado com sucesso
-      trackEvent('pix_generated', {
-        productName: product.name,
-        productPrice: basePrice,
-        orderId: result.orderId,
-        amount: pixTotal,
-      });
+
+      // pix_generated: só tracka se gerou com sucesso (tem QR code ou checkout URL)
+      if (result.pixQrCode || result.pixQrCodeImage || result.checkoutUrl) {
+        trackEvent('pix_generated', {
+          productName: product.name,
+          productPrice: basePrice,
+          orderId: result.orderId,
+          amount: pixTotal,
+        });
+
+        // Inicia polling para detectar pagamento
+        if (result.orderId) {
+          startPixPaidPolling(result.orderId, pixTotal);
+        }
+      }
+
       setStep('pix');
     } catch (err) {
-      console.error('ZeroOnePay order error:', err);
+      console.error('PIX order error:', err);
       setStep('pix');
     } finally {
       setLoading(false);
