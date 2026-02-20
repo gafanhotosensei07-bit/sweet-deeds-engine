@@ -12,6 +12,7 @@ import MasculinoSection from './components/MasculinoSection';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import SupportChat from './components/SupportChat';
+import WelcomePopup from './components/WelcomePopup';
 import { CartProvider } from './context/CartContext';
 import Admin from './pages/Admin';
 import { trackEvent } from './lib/analytics';
@@ -38,6 +39,7 @@ const Store: React.FC = () => {
         <Footer />
         <CartDrawer />
         <SupportChat />
+        <WelcomePopup />
       </div>
     </CartProvider>
   );
