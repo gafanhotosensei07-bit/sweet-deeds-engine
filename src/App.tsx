@@ -7,6 +7,8 @@ import ProductGrid from './components/ProductGrid';
 import TNSection from './components/TNSection';
 import KidsSection from './components/KidsSection';
 import ComboSection from './components/ComboSection';
+import FemininoSection from './components/FemininoSection';
+import MasculinoSection from './components/MasculinoSection';
 import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import SupportChat from './components/SupportChat';
@@ -21,6 +23,8 @@ const Store: React.FC = () => (
         <Hero />
         <Banners />
         <TNSection />
+        <FemininoSection />
+        <MasculinoSection />
         <KidsSection />
         <ComboSection />
         <ProductGrid title="MAIS VENDIDOS DO DIA" />
@@ -31,6 +35,7 @@ const Store: React.FC = () => (
     </div>
   </CartProvider>
 );
+
 
 function App() {
   return (
