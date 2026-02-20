@@ -1,37 +1,44 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Period } from '@/pages/Admin';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, QrCode, CheckCircle, Activity, Target } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   period: Period;
 }
 
-const mockData = {
-  today: {
-    volume: 'R$ 4.782,00', volumeChange: +18.4,
-    totalSales: 23, salesChange: +12,
-    ticket: 'R$ 207,90', ticketChange: +5.8,
-    conversion: '34,2%', conversionChange: +2.1,
-    pixGenerated: 67, pixGeneratedChange: +8,
-    pixPaid: 23, pixPaidChange: +12,
-  },
-  '7days': {
-    volume: 'R$ 31.450,00', volumeChange: +22.1,
-    totalSales: 151, salesChange: +18,
-    ticket: 'R$ 208,28', ticketChange: +3.2,
-    conversion: '32,8%', conversionChange: +1.4,
-    pixGenerated: 460, pixGeneratedChange: +15,
-    pixPaid: 151, pixPaidChange: +18,
-  },
-  '30days': {
-    volume: 'R$ 127.890,00', volumeChange: +31.5,
-    totalSales: 614, salesChange: +24,
-    ticket: 'R$ 208,29', ticketChange: +7.1,
-    conversion: '31,5%', conversionChange: +3.2,
-    pixGenerated: 1950, pixGeneratedChange: +20,
-    pixPaid: 614, pixPaidChange: +24,
-  },
-};
+interface KPIData {
+  volume: string;
+  volumeChange: number;
+  totalSales: number;
+  salesChange: number;
+  ticket: string;
+  ticketChange: number;
+  conversion: string;
+  conversionChange: number;
+  pixGenerated: number;
+  pixGeneratedChange: number;
+  pixPaid: number;
+  pixPaidChange: number;
+}
+
+function periodToRange(period: Period): { from: Date; prevFrom: Date } {
+  const now = new Date();
+  const from = new Date(now);
+  const prevFrom = new Date(now);
+  if (period === 'today') {
+    from.setHours(0, 0, 0, 0);
+    prevFrom.setDate(prevFrom.getDate() - 1);
+    prevFrom.setHours(0, 0, 0, 0);
+  } else if (period === '7days') {
+    from.setDate(from.getDate() - 7);
+    prevFrom.setDate(prevFrom.getDate() - 14);
+  } else {
+    from.setDate(from.getDate() - 30);
+    prevFrom.setDate(prevFrom.getDate() - 60);
+  }
+  return { from, prevFrom };
+}
 
 const KPICard: React.FC<{
   title: string;
@@ -60,17 +67,90 @@ const KPICard: React.FC<{
   );
 };
 
+async function fetchKPIs(period: Period): Promise<KPIData> {
+  const { from, prevFrom } = periodToRange(period);
+  const now = new Date();
+  const prevTo = new Date(from);
+
+  const [curPix, prevPix, curCheckout, prevCheckout, curViews, prevViews] = await Promise.all([
+    supabase.from('analytics_events').select('amount').eq('event_type', 'pix_paid').gte('created_at', from.toISOString()).lte('created_at', now.toISOString()),
+    supabase.from('analytics_events').select('amount').eq('event_type', 'pix_paid').gte('created_at', prevFrom.toISOString()).lt('created_at', prevTo.toISOString()),
+    supabase.from('analytics_events').select('id').eq('event_type', 'checkout_started').gte('created_at', from.toISOString()),
+    supabase.from('analytics_events').select('id').eq('event_type', 'checkout_started').gte('created_at', prevFrom.toISOString()).lt('created_at', prevTo.toISOString()),
+    supabase.from('analytics_events').select('id').eq('event_type', 'page_view').gte('created_at', from.toISOString()),
+    supabase.from('analytics_events').select('id').eq('event_type', 'page_view').gte('created_at', prevFrom.toISOString()).lt('created_at', prevTo.toISOString()),
+  ]);
+
+  const pixPaidCur = curPix.data ?? [];
+  const pixPaidPrev = prevPix.data ?? [];
+  const pixGenCur = (await supabase.from('analytics_events').select('id').eq('event_type', 'pix_generated').gte('created_at', from.toISOString())).data ?? [];
+  const pixGenPrev = (await supabase.from('analytics_events').select('id').eq('event_type', 'pix_generated').gte('created_at', prevFrom.toISOString()).lt('created_at', prevTo.toISOString())).data ?? [];
+
+  const volume = pixPaidCur.reduce((s: number, r: any) => s + (r.amount ?? 0), 0);
+  const prevVolume = pixPaidPrev.reduce((s: number, r: any) => s + (r.amount ?? 0), 0);
+
+  const totalSales = pixPaidCur.length;
+  const prevTotalSales = pixPaidPrev.length;
+
+  const ticket = totalSales > 0 ? volume / totalSales : 0;
+  const prevTicket = prevTotalSales > 0 ? prevVolume / prevTotalSales : 0;
+
+  const views = curViews.data?.length ?? 0;
+  const checkouts = curCheckout.data?.length ?? 0;
+  const prevCheckouts = prevCheckout.data?.length ?? 0;
+  const conversion = views > 0 ? (totalSales / views) * 100 : 0;
+  const prevViews2 = prevViews.data?.length ?? 0;
+  const prevConversion = prevViews2 > 0 ? (prevTotalSales / prevViews2) * 100 : 0;
+
+  const pct = (cur: number, prev: number) => prev === 0 ? (cur > 0 ? 100 : 0) : Math.round(((cur - prev) / prev) * 100);
+
+  return {
+    volume: `R$ ${volume.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+    volumeChange: pct(volume, prevVolume),
+    totalSales,
+    salesChange: pct(totalSales, prevTotalSales),
+    ticket: `R$ ${ticket.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+    ticketChange: pct(ticket, prevTicket),
+    conversion: `${conversion.toFixed(1)}%`,
+    conversionChange: parseFloat((conversion - prevConversion).toFixed(1)),
+    pixGenerated: pixGenCur.length,
+    pixGeneratedChange: pct(pixGenCur.length, pixGenPrev.length),
+    pixPaid: totalSales,
+    pixPaidChange: pct(totalSales, prevTotalSales),
+  };
+}
+
 const AdminKPIs: React.FC<Props> = ({ period }) => {
-  const d = mockData[period];
+  const [data, setData] = useState<KPIData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetchKPIs(period).then(d => { setData(d); setLoading(false); });
+  }, [period]);
+
+  if (loading || !data) {
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="bg-[#0d0d15] border border-white/5 rounded-xl p-5 animate-pulse">
+            <div className="w-9 h-9 bg-white/5 rounded-lg mb-4" />
+            <div className="h-2 bg-white/5 rounded w-2/3 mb-2" />
+            <div className="h-5 bg-white/5 rounded w-1/2" />
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-      <KPICard title="Volume de Vendas" value={d.volume} change={d.volumeChange} icon={<DollarSign size={16} />} accent="#f39b19" />
-      <KPICard title="Total de Vendas" value={d.totalSales} change={d.salesChange} icon={<ShoppingBag size={16} />} accent="#8b5cf6" />
-      <KPICard title="Ticket Médio" value={d.ticket} change={d.ticketChange} icon={<Activity size={16} />} accent="#06b6d4" />
-      <KPICard title="Conversão PIX" value={d.conversion} change={d.conversionChange} icon={<Target size={16} />} accent="#10b981" />
-      <KPICard title="PIX Gerados" value={d.pixGenerated} change={d.pixGeneratedChange} icon={<QrCode size={16} />} accent="#f59e0b" />
-      <KPICard title="PIX Pagos" value={d.pixPaid} change={d.pixPaidChange} icon={<CheckCircle size={16} />} accent="#10b981" />
+      <KPICard title="Volume de Vendas" value={data.volume} change={data.volumeChange} icon={<DollarSign size={16} />} accent="#f39b19" />
+      <KPICard title="Total de Vendas" value={data.totalSales} change={data.salesChange} icon={<ShoppingBag size={16} />} accent="#8b5cf6" />
+      <KPICard title="Ticket Médio" value={data.ticket} change={data.ticketChange} icon={<Activity size={16} />} accent="#06b6d4" />
+      <KPICard title="Conversão PIX" value={data.conversion} change={data.conversionChange} icon={<Target size={16} />} accent="#10b981" />
+      <KPICard title="PIX Gerados" value={data.pixGenerated} change={data.pixGeneratedChange} icon={<QrCode size={16} />} accent="#f59e0b" />
+      <KPICard title="PIX Pagos" value={data.pixPaid} change={data.pixPaidChange} icon={<CheckCircle size={16} />} accent="#10b981" />
     </div>
   );
 };

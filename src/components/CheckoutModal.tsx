@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2, Copy, CheckCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
+import { trackEvent } from '@/lib/analytics';
 
 export interface CheckoutProduct {
   id: number;
@@ -60,6 +61,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const handleNext = () => {
     if (validate()) {
       addItem(product, selectedSize, quantity);
+      trackEvent('checkout_started', {
+        productName: product.name,
+        productPrice: parseFloat(product.price.replace(',', '.')),
+      });
       setStep('form');
     }
   };
@@ -68,6 +73,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     if (!validate()) return;
     setLoading(true);
     try {
+      const pixTotal = parseFloat((basePrice * 0.9 * quantity).toFixed(2));
       const result = await createZeroOnePayOrder({
         customer: form,
         items: [{
@@ -77,9 +83,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           quantity,
           image: product.image,
         }],
-        totalPrice: parseFloat((basePrice * 0.9 * quantity).toFixed(2)),
+        totalPrice: pixTotal,
       });
       setPixResult(result);
+      // Tracking: PIX gerado com sucesso
+      trackEvent('pix_generated', {
+        productName: product.name,
+        productPrice: basePrice,
+        orderId: result.orderId,
+        amount: pixTotal,
+      });
       setStep('pix');
     } catch (err) {
       console.error('ZeroOnePay order error:', err);

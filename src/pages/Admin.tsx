@@ -21,7 +21,21 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'integrations'>('dashboard');
   const [period, setPeriod] = useState<Period>('today');
   const [gateways, setGateways] = useState<GatewaySetting[]>([]);
-  const [liveVisitors] = useState(Math.floor(Math.random() * 40) + 8);
+  const [liveVisitors, setLiveVisitors] = useState(0);
+
+  // Visitantes ao vivo: page_views nos últimos 5 minutos por session_id único
+  const fetchLiveVisitors = useCallback(async () => {
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data } = await supabase
+      .from('analytics_events')
+      .select('session_id')
+      .eq('event_type', 'page_view')
+      .gte('created_at', fiveMinAgo);
+    if (data) {
+      const unique = new Set(data.map((r: any) => r.session_id));
+      setLiveVisitors(unique.size);
+    }
+  }, []);
 
   const fetchGateways = useCallback(async () => {
     const { data } = await supabase.from('gateway_settings').select('*').order('gateway_name');
@@ -30,7 +44,10 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     fetchGateways();
-  }, [fetchGateways]);
+    fetchLiveVisitors();
+    const interval = setInterval(fetchLiveVisitors, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchGateways, fetchLiveVisitors]);
 
   const activeGateway = gateways.find(g => g.is_active);
 
