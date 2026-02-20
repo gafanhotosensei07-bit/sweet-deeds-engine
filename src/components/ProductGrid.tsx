@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
 import { useCart } from '@/context/CartContext';
+import { ShoppingCart } from 'lucide-react';
 
 interface Product {
   id: number;
@@ -11,6 +12,8 @@ interface Product {
   image: string;
   discount: string;
 }
+
+const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
 
 const products: Product[] = [
   { id: 1, name: 'AIR FORCE NOBOOK PRETO', oldPrice: '299,90', price: '129,90', installments: '11,66', image: 'https://cdn.sistemawbuy.com.br/arquivos/0eea9453a8daf929264353354d7552fa/produtos/6851bcdf477b4/56912e4c305e752e5678b2ceb0c002ad-6851bd732581d_mini.jpg', discount: '-57%' },
@@ -24,7 +27,18 @@ const products: Product[] = [
 ];
 
 const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
+  const { addItem, openCart } = useCart();
   const [checkoutProduct, setCheckoutProduct] = useState<CheckoutProduct | null>(null);
+  const [cartProduct, setCartProduct] = useState<Product | null>(null);
+  const [pendingSize, setPendingSize] = useState('');
+
+  const handleAddToCart = () => {
+    if (!cartProduct || !pendingSize) return;
+    addItem(cartProduct as CheckoutProduct, pendingSize, 1);
+    setCartProduct(null);
+    setPendingSize('');
+    openCart();
+  };
 
   return (
     <section className="container mx-auto px-4 py-12">
@@ -36,9 +50,9 @@ const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
               {product.discount}
             </div>
             <div className="aspect-square overflow-hidden mb-4">
-              <img 
-                src={product.image} 
-                alt={product.name} 
+              <img
+                src={product.image}
+                alt={product.name}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
             </div>
@@ -49,20 +63,69 @@ const ProductGrid: React.FC<{ title: string }> = ({ title }) => {
               <p className="text-[10px] text-gray-600 mb-4">
                 <strong>12x</strong> de <strong>R${product.installments}</strong>
               </p>
-              <button
-                onClick={() => setCheckoutProduct(product)}
-                className="w-full bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors"
-              >
-                COMPRAR
-              </button>
+              <div className="flex gap-1">
+                <button
+                  onClick={() => setCheckoutProduct(product as CheckoutProduct)}
+                  className="flex-1 bg-black text-white py-2 text-xs font-bold hover:bg-[#f39b19] transition-colors"
+                >
+                  COMPRAR
+                </button>
+                <button
+                  onClick={() => { setCartProduct(product); setPendingSize(''); }}
+                  className="w-10 bg-gray-100 text-black hover:bg-[#f39b19] hover:text-white transition-colors flex items-center justify-center flex-shrink-0"
+                  title="Adicionar ao carrinho"
+                >
+                  <ShoppingCart size={14} />
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
       <CheckoutModal product={checkoutProduct} onClose={() => setCheckoutProduct(null)} />
+
+      {cartProduct && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={() => setCartProduct(null)} />
+          <div className="fixed inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 top-1/2 -translate-y-1/2 z-50 bg-white w-full md:max-w-sm p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <img src={cartProduct.image} alt={cartProduct.name} className="w-14 h-14 object-cover bg-gray-50" />
+              <div>
+                <p className="font-black text-xs uppercase leading-tight">{cartProduct.name}</p>
+                <p className="text-[#f39b19] font-black text-sm mt-0.5">R$ {cartProduct.price}</p>
+              </div>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-3">Selecione o tamanho (BR)</p>
+            <div className="grid grid-cols-6 gap-2 mb-5">
+              {SIZES.map(size => (
+                <button
+                  key={size}
+                  onClick={() => setPendingSize(size)}
+                  className={`py-2 text-xs font-bold border transition-all ${pendingSize === size ? 'bg-black text-white border-black' : 'border-gray-300 hover:border-[#f39b19] hover:text-[#f39b19]'}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setCartProduct(null)} className="flex-1 border border-gray-300 py-3 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={!pendingSize}
+                className={`flex-[2] py-3 text-xs font-black uppercase tracking-widest transition-colors ${pendingSize ? 'bg-[#f39b19] text-black hover:bg-black hover:text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
+              >
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </section>
   );
 };
 
 export default ProductGrid;
+

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CheckoutModal, { CheckoutProduct } from './CheckoutModal';
 import { useCart } from '@/context/CartContext';
+import { ShoppingCart } from 'lucide-react';
 
 import tnTripleBlack from '@/assets/tn-triple-black-final.jpg';
 import tnSunset from '@/assets/tn-sunset-final.jpg';
@@ -26,8 +27,21 @@ const tnProducts: CheckoutProduct[] = [
   { id: 210, name: 'AIR MAX PLUS SE "GREEDY"', oldPrice: '199,90', price: '89,90', installments: '8,17', image: tnGreedy, discount: '-55%' },
 ];
 
+const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
+
 const TNSection: React.FC = () => {
+  const { addItem, openCart } = useCart();
   const [checkoutProduct, setCheckoutProduct] = useState<CheckoutProduct | null>(null);
+  const [cartProduct, setCartProduct] = useState<CheckoutProduct | null>(null);
+  const [pendingSize, setPendingSize] = useState('');
+
+  const handleAddToCart = () => {
+    if (!cartProduct || !pendingSize) return;
+    addItem(cartProduct, pendingSize, 1);
+    setCartProduct(null);
+    setPendingSize('');
+    openCart();
+  };
 
   return (
     <>
@@ -108,12 +122,21 @@ const TNSection: React.FC = () => {
                   <p className="text-gray-600 text-[9px] line-through mb-0.5">R$ {product.oldPrice}</p>
                   <p className="text-white font-black text-base leading-none mb-0.5">R$ {product.price}</p>
                   <p className="text-gray-500 text-[9px] mb-3">12x R$ {product.installments}</p>
-                  <button
-                    onClick={() => setCheckoutProduct(product)}
-                    className="w-full bg-[#f39b19] text-black py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
-                  >
-                    COMPRAR
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => setCheckoutProduct(product)}
+                      className="flex-1 bg-[#f39b19] text-black py-2 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-colors"
+                    >
+                      COMPRAR
+                    </button>
+                    <button
+                      onClick={() => { setCartProduct(product); setPendingSize(''); }}
+                      className="w-9 bg-white/10 text-white hover:bg-[#f39b19] hover:text-black transition-colors flex items-center justify-center flex-shrink-0"
+                      title="Adicionar ao carrinho"
+                    >
+                      <ShoppingCart size={13} />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -128,7 +151,45 @@ const TNSection: React.FC = () => {
         </div>
       </section>
 
-      <CheckoutModal product={checkoutProduct} onClose={() => setCheckoutProduct(null)} />
+
+      {cartProduct && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={() => setCartProduct(null)} />
+          <div className="fixed inset-x-4 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 top-1/2 -translate-y-1/2 z-50 bg-white w-full md:max-w-sm p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <img src={cartProduct.image} alt={cartProduct.name} className="w-14 h-14 object-cover bg-gray-50" />
+              <div>
+                <p className="font-black text-xs uppercase leading-tight">{cartProduct.name}</p>
+                <p className="text-[#f39b19] font-black text-sm mt-0.5">R$ {cartProduct.price}</p>
+              </div>
+            </div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-3">Selecione o tamanho (BR)</p>
+            <div className="grid grid-cols-6 gap-2 mb-5">
+              {SIZES.map(size => (
+                <button
+                  key={size}
+                  onClick={() => setPendingSize(size)}
+                  className={`py-2 text-xs font-bold border transition-all ${pendingSize === size ? 'bg-black text-white border-black' : 'border-gray-300 hover:border-[#f39b19] hover:text-[#f39b19]'}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setCartProduct(null)} className="flex-1 border border-gray-300 py-3 text-xs font-black uppercase tracking-widest hover:bg-gray-50 transition-colors">
+                Cancelar
+              </button>
+              <button
+                onClick={handleAddToCart}
+                disabled={!pendingSize}
+                className={`flex-[2] py-3 text-xs font-black uppercase tracking-widest transition-colors ${pendingSize ? 'bg-[#f39b19] text-black hover:bg-black hover:text-white' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`}
+              >
+                Adicionar ao Carrinho
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       <style>{`
         @keyframes marquee {
@@ -141,3 +202,4 @@ const TNSection: React.FC = () => {
 };
 
 export default TNSection;
+
