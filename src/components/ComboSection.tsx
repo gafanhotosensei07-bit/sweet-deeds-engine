@@ -227,7 +227,7 @@ const ComboSection: React.FC = () => {
                 <p className="text-gray-500 text-xs line-through">De R$ {fmt(subtotal)}</p>
                 <p className="text-green-400 text-sm font-bold">-R$ {fmt(discount)} (50% OFF)</p>
                 <p className="text-white font-black text-2xl">R$ {fmt(total)}</p>
-                <p className="text-gray-500 text-[10px]">12x de R$ {fmt(total / 12)}</p>
+                <p className="text-gray-500 text-[10px]">10% OFF no PIX</p>
               </div>
             </div>
           </div>

@@ -59,7 +59,7 @@ const TNSection: React.FC = () => {
               AIR MAX PLUS · TODOS OS MODELOS · A MELHOR SELEÇÃO
             </p>
             <div className="flex items-center gap-6 mt-6">
-              {['10 MODELOS', 'FRETE GRÁTIS', 'ATÉ 12X'].map((item, i) => (
+              {['10 MODELOS', 'FRETE GRÁTIS', '10% OFF NO PIX'].map((item, i) => (
                 <div key={item} className="flex items-center gap-6">
                   <span className="text-white text-[11px] font-bold uppercase tracking-widest">{item}</span>
                   {i < 2 && <span className="text-[#f39b19] text-lg font-thin">|</span>}

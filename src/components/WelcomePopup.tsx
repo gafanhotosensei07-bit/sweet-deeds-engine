@@ -63,7 +63,7 @@ const WelcomePopup: React.FC = () => {
           <div className="grid grid-cols-2 gap-3 mb-6">
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-3">
               <CreditCard className="h-5 w-5 text-[#f39b19] shrink-0" />
-              <span className="text-xs font-bold text-gray-700">Até 12x no cartão</span>
+              <span className="text-xs font-bold text-gray-700">10% de desconto no PIX</span>
             </div>
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-3">
               <Truck className="h-5 w-5 text-[#f39b19] shrink-0" />
