@@ -40,7 +40,7 @@ const Header: React.FC = () => {
 
       {/* Main Header */}
       <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between gap-4">
+        <div className="container mx-auto px-3 md:px-4 py-2 md:py-4 flex items-center justify-between gap-2 md:gap-4">
           <div className="flex items-center gap-3 md:gap-4">
             <button className="md:hidden text-2xl" onClick={() => setMenuOpen(true)} aria-label="Menu">☰</button>
             <a href="/" className="flex items-center">
@@ -105,12 +105,12 @@ const Header: React.FC = () => {
         </div>
 
         {/* Mobile search */}
-        <div className="md:hidden px-4 pb-3">
+        <div className="md:hidden px-3 pb-2">
           <div className="relative">
             <input 
               type="text" 
               placeholder="Olá, o que você procura?" 
-              className="w-full border rounded-full py-2 px-5 text-sm focus:outline-none focus:ring-2 focus:ring-[#f39b19]"
+              className="w-full border rounded-full py-1.5 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#f39b19]"
             />
             <button className="absolute right-4 top-2.5 text-gray-400">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

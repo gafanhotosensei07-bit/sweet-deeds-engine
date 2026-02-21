@@ -45,9 +45,9 @@ const TNSection: React.FC = () => {
 
   return (
     <>
-      <section id="section-tn" className="bg-black py-16">
+      <section id="section-tn" className="bg-black py-8 md:py-16">
         {/* Hero Banner */}
-        <div className="container mx-auto px-4 mb-12">
+        <div className="container mx-auto px-3 md:px-4 mb-6 md:mb-12">
           <div className="flex flex-col items-center text-center">
             <span className="text-[#f39b19] text-[10px] font-black uppercase tracking-[0.4em] mb-4 border border-[#f39b19] px-4 py-1">
               Especialistas em

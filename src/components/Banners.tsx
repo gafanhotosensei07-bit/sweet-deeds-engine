@@ -28,8 +28,8 @@ const banners = [
 
 const Banners: React.FC = () => {
   return (
-    <section className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <section className="container mx-auto px-3 md:px-4 py-4 md:py-8">
+      <div className="grid grid-cols-3 gap-2 md:gap-4">
         {banners.map((b) => (
           <div
             key={b.target + b.label}
@@ -54,7 +54,7 @@ const Banners: React.FC = () => {
       </div>
 
       <div
-        className="mt-8 cursor-pointer group relative overflow-hidden"
+        className="mt-4 md:mt-8 cursor-pointer group relative overflow-hidden"
         onClick={() => scrollTo('section-kids')}
       >
         <img

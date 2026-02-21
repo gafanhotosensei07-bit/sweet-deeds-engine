@@ -78,7 +78,7 @@ const ComboSection: React.FC = () => {
   };
 
   return (
-    <section className="bg-black py-16 border-t-4 border-[#f39b19]">
+    <section className="bg-black py-8 md:py-16 border-t-4 border-[#f39b19]">
       {/* Header */}
       <div className="container mx-auto px-4 mb-10">
         <div className="flex flex-col items-center text-center">

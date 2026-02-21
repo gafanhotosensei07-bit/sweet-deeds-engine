@@ -96,7 +96,7 @@ const FemininoSection: React.FC = () => {
 
   return (
     <>
-      <section id="section-feminino" className="bg-white py-16 border-t-4 border-pink-400">
+      <section id="section-feminino" className="bg-white py-8 md:py-16 border-t-4 border-pink-400">
         {/* Header */}
         <div className="container mx-auto px-4 mb-10">
           <div className="flex flex-col items-center text-center">
@@ -121,7 +121,7 @@ const FemininoSection: React.FC = () => {
 
         {/* Grid */}
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6">
             {femininoProducts.map((product) => (
               <div
                 key={product.id}
