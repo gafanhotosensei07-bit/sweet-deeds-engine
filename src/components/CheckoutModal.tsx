@@ -22,7 +22,7 @@ interface CheckoutModalProps {
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
-  const { addItem } = useCart();
+  const { addItem, createOrder } = useCart();
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [step, setStep] = useState<'product' | 'form' | 'pix'>('product');
@@ -143,6 +143,22 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           productPrice: basePrice,
           orderId: result.orderId,
           amount: pixTotal,
+        });
+
+        // Create order in database
+        await createOrder({
+          customer: form,
+          items: [{
+            name: product.name,
+            price: product.price,
+            size: selectedSize,
+            quantity,
+            image: product.image,
+          }],
+          total: pixTotal,
+          subtotal: basePrice * quantity,
+          discount: basePrice * quantity * 0.1,
+          pixOrderId: result.orderId,
         });
 
         // Inicia polling para detectar pagamento

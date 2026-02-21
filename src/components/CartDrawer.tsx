@@ -3,9 +3,10 @@ import { X, ShoppingBag, Trash2, QrCode, Check, Truck, Shield, Loader2, Copy, Ch
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
 import { QRCodeSVG } from 'qrcode.react';
+import OrderTracker from './OrderTracker';
 
 const CartDrawer: React.FC = () => {
-  const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
+  const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart, orders, ordersLoading, createOrder } = useCart();
   const [step, setStep] = useState<'cart' | 'form' | 'pix'>('cart');
   const [form, setForm] = useState({ name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,18 +40,31 @@ const CartDrawer: React.FC = () => {
     if (!validate()) return;
     setLoading(true);
     try {
+      const cartItems = items.map(item => ({
+        name: item.product.name,
+        price: item.product.price,
+        size: item.size,
+        quantity: item.quantity,
+        image: item.product.image,
+      }));
+      const pixTotalNum = parseFloat((totalPrice * 0.9).toFixed(2));
       const result = await createZeroOnePayOrder({
         customer: form,
-        items: items.map(item => ({
-          name: item.product.name,
-          price: item.product.price,
-          size: item.size,
-          quantity: item.quantity,
-          image: item.product.image,
-        })),
-        totalPrice: parseFloat((totalPrice * 0.9).toFixed(2)),
+        items: cartItems,
+        totalPrice: pixTotalNum,
       });
       setPixResult(result);
+
+      // Create order in database
+      await createOrder({
+        customer: form,
+        items: cartItems,
+        total: pixTotalNum,
+        subtotal: totalPrice,
+        discount: totalPrice * 0.1,
+        pixOrderId: result.orderId,
+      });
+
       clearCart();
       setStep('pix');
     } catch (err) {
@@ -195,13 +209,21 @@ const CartDrawer: React.FC = () => {
           {step === 'cart' && (
             <div className="p-5">
               {items.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
-                  <ShoppingBag size={48} className="text-gray-200 mb-4" />
-                  <p className="text-gray-400 text-sm uppercase tracking-widest font-bold">Carrinho vazio</p>
-                  <p className="text-gray-300 text-xs mt-1">Adicione produtos para continuar</p>
-                  <button onClick={handleClose} className="mt-6 bg-[#f39b19] text-white px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-black transition-colors">
-                    Continuar Comprando
-                  </button>
+                <div className="p-5">
+                  {/* Order Tracker */}
+                  {orders.length > 0 && (
+                    <div className="mb-6">
+                      <OrderTracker orders={orders} loading={ordersLoading} />
+                    </div>
+                  )}
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <ShoppingBag size={48} className="text-gray-200 mb-4" />
+                    <p className="text-gray-400 text-sm uppercase tracking-widest font-bold">Carrinho vazio</p>
+                    <p className="text-gray-300 text-xs mt-1">Adicione produtos para continuar</p>
+                    <button onClick={handleClose} className="mt-6 bg-[#f39b19] text-white px-6 py-2 text-xs font-black uppercase tracking-widest hover:bg-black transition-colors">
+                      Continuar Comprando
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>
