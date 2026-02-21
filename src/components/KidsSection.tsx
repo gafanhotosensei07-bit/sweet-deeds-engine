@@ -392,7 +392,7 @@ const KidsSection: React.FC = () => {
 
   return (
     <>
-      <section id="section-kids" className="bg-white py-16 border-t-4 border-[#f39b19]">
+      <section id="section-kids" className="bg-white py-8 md:py-16 border-t-4 border-[#f39b19]">
         {/* Header */}
         <div className="container mx-auto px-4 mb-10">
           <div className="flex flex-col items-center text-center">
@@ -460,7 +460,7 @@ const KidsSection: React.FC = () => {
 
         {/* Grid */}
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-6">
             {filtered.map((product) => (
               <div
                 key={product.id}

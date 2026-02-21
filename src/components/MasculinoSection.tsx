@@ -96,7 +96,7 @@ const MasculinoSection: React.FC = () => {
 
   return (
     <>
-      <section id="section-masculino" className="bg-gray-950 py-16 border-t-4 border-blue-500">
+      <section id="section-masculino" className="bg-gray-950 py-8 md:py-16 border-t-4 border-blue-500">
         {/* Header */}
         <div className="container mx-auto px-4 mb-10">
           <div className="flex flex-col items-center text-center">
