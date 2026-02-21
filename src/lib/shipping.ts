@@ -72,15 +72,12 @@ export async function fetchAddressByCEP(cep: string): Promise<ViaCEPResponse | n
 }
 
 export function calculateShipping(uf: string, cartTotal: number): ShippingOption[] {
-  const regionData = SHIPPING_TABLE[uf.toUpperCase()];
-  if (!regionData) {
-    // Fallback genérico
-    return [
-      { id: 'free', name: 'Frete Grátis', price: 0, days: '10-20 dias', carrier: 'Econômico' },
-      { id: 'express', name: 'Frete Expresso', price: 24.90, days: '5-8 dias', carrier: 'Loggi' },
-      { id: 'sedex', name: 'Sedex', price: 29.90, days: '3-5 dias', carrier: 'Correios' },
-    ];
-  }
+  const regionData = SHIPPING_TABLE[uf.toUpperCase()] || {
+    express: 25.90,
+    sedex: 29.90,
+    days_express: '7-12 dias',
+    days_sedex: '5-8 dias',
+  };
 
   const options: ShippingOption[] = [];
 
