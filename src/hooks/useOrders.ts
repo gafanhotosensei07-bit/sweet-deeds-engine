@@ -98,6 +98,7 @@ export function useOrders() {
     subtotal: number;
     discount: number;
     pixOrderId?: string;
+    usedGateway?: string;
   }): Promise<Order | null> => {
     const sessionId = getSessionId();
     const now = new Date().toISOString();
@@ -125,6 +126,7 @@ export function useOrders() {
         items: orderData.items as any,
         session_id: sessionId,
         pix_order_id: orderData.pixOrderId || null,
+        used_gateway: orderData.usedGateway || null,
         status_history: statusHistory as any,
         estimated_delivery: estimatedDelivery,
       })

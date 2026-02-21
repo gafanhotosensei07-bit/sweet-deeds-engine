@@ -68,7 +68,8 @@ export const createZeroOnePayOrder = async (
         pixQrCode: data.pixQrCode,
         pixQrCodeImage: data.pixQrCodeImage,
         pixAmount: payload.totalPrice,
-      };
+        usedGateway: data.usedGateway,
+      } as ZeroOnePayResult & { usedGateway?: string };
     }
 
     console.warn('PIX generation failed:', data);

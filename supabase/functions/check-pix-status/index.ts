@@ -19,6 +19,51 @@ function generateTrackingCode(): string {
   return code + 'BR';
 }
 
+async function checkGatewayStatus(gatewayName: string, apiToken: string, orderId: string): Promise<string> {
+  let status = 'pending';
+
+  try {
+    if (gatewayName === 'ZeroOnePay') {
+      const res = await fetch(`https://api.zeroonepay.com.br/api/public/v1/transactions/${orderId}`, {
+        headers: { 'Authorization': `Bearer ${apiToken}`, 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const txStatus = data.status || data.transaction?.status || '';
+        if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
+          status = 'paid';
+        }
+      }
+    } else if (gatewayName === 'GoatPay') {
+      const res = await fetch(`https://api.goatpayments.com.br/api/public/v1/transactions/${orderId}?api_token=${apiToken}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const txStatus = data.status || data.payment_status || '';
+        if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
+          status = 'paid';
+        }
+      }
+    } else if (gatewayName === 'SigmaPay') {
+      const res = await fetch(`https://api.sigmapay.com.br/api/public/v1/transactions/${orderId}?api_token=${apiToken}`, {
+        headers: { 'Accept': 'application/json' },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const txStatus = data.status || data.transaction?.status || '';
+        if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
+          status = 'paid';
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`check-pix-status ${gatewayName} error:`, err);
+  }
+
+  return status;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -34,75 +79,55 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Busca o gateway ativo para saber qual API consultar
-    const { data: gateways } = await supabase
-      .from('gateway_settings')
-      .select('*')
-      .eq('is_active', true)
+    // First, check if the order has a stored used_gateway
+    const { data: orderData } = await supabase
+      .from('orders')
+      .select('id, status, tracking_code, status_history, used_gateway')
+      .eq('pix_order_id', orderId)
       .limit(1);
 
-    const gateway = gateways?.[0];
+    const order = orderData?.[0];
+    const usedGateway = order?.used_gateway;
+
+    // Find the correct gateway to check
+    let gateway = null;
+
+    if (usedGateway) {
+      // Use the specific gateway that generated this PIX
+      const { data: gw } = await supabase
+        .from('gateway_settings')
+        .select('*')
+        .eq('gateway_name', usedGateway)
+        .limit(1);
+      gateway = gw?.[0];
+      console.log(`Using stored gateway: ${usedGateway}`);
+    }
+
+    if (!gateway) {
+      // Fallback: try active gateway
+      const { data: gw } = await supabase
+        .from('gateway_settings')
+        .select('*')
+        .eq('is_active', true)
+        .limit(1);
+      gateway = gw?.[0];
+      console.log(`Fallback to active gateway: ${gateway?.gateway_name}`);
+    }
+
     if (!gateway) {
       return new Response(JSON.stringify({ status: 'unknown' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    let status = 'pending';
+    const status = await checkGatewayStatus(gateway.gateway_name, gateway.api_token, orderId);
 
-    try {
-      if (gateway.gateway_name === 'ZeroOnePay') {
-        const res = await fetch(`https://api.zeroonepay.com.br/api/public/v1/transactions/${orderId}`, {
-          headers: { 'Authorization': `Bearer ${gateway.api_token}`, 'Accept': 'application/json' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const txStatus = data.status || data.transaction?.status || '';
-          if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
-            status = 'paid';
-          }
-        }
-      } else if (gateway.gateway_name === 'GoatPay') {
-        const res = await fetch(`https://api.goatpayments.com.br/api/public/v1/transactions/${orderId}?api_token=${gateway.api_token}`, {
-          headers: { 'Accept': 'application/json' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const txStatus = data.status || data.payment_status || '';
-          if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
-            status = 'paid';
-          }
-        }
-      } else if (gateway.gateway_name === 'SigmaPay') {
-        const res = await fetch(`https://api.sigmapay.com.br/api/public/v1/transactions/${orderId}?api_token=${gateway.api_token}`, {
-          headers: { 'Accept': 'application/json' },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const txStatus = data.status || data.transaction?.status || '';
-          if (['paid', 'approved', 'completed', 'confirmed'].includes(txStatus.toLowerCase())) {
-            status = 'paid';
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('check-pix-status gateway error:', err);
-    }
-
-    // Se o pagamento foi confirmado, atualiza o pedido com código de rastreio
+    // If paid, update order with tracking code
     let trackingCode: string | null = null;
     let dbOrderId: string | null = null;
 
-    if (status === 'paid') {
-      // Busca o pedido pelo pix_order_id
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('id, status, tracking_code, status_history')
-        .eq('pix_order_id', orderId)
-        .limit(1);
-
-      const order = orderData?.[0];
-      if (order && order.status !== 'paid' && order.status !== 'delivered') {
+    if (status === 'paid' && order) {
+      if (order.status !== 'paid' && order.status !== 'delivered') {
         trackingCode = generateTrackingCode();
         const now = new Date().toISOString();
         const history = Array.isArray(order.status_history) ? order.status_history : [];
@@ -119,7 +144,7 @@ Deno.serve(async (req) => {
           .eq('id', order.id);
 
         dbOrderId = order.id;
-      } else if (order) {
+      } else {
         trackingCode = order.tracking_code;
         dbOrderId = order.id;
       }

@@ -1,0 +1,1 @@
+ALTER TABLE public.orders ADD COLUMN used_gateway text DEFAULT NULL;
