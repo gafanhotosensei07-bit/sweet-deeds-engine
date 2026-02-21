@@ -16,6 +16,7 @@ import WelcomePopup from './components/WelcomePopup';
 import { CartProvider } from './context/CartContext';
 import Admin from './pages/Admin';
 import OrderPage from './pages/OrderPage';
+import PixPage from './pages/PixPage';
 import { trackEvent } from './lib/analytics';
 
 const Store: React.FC = () => {
@@ -56,6 +57,7 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Store />} />
+          <Route path="/pix" element={<PixPage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/pedido/:id" element={<OrderPage />} />
         </Routes>

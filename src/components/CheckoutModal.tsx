@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2, Copy, CheckCheck } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
+import { createZeroOnePayOrder } from '@/lib/wbuyApi';
 import { trackEvent } from '@/lib/analytics';
 import ShippingCalculator from './ShippingCalculator';
 import { ShippingOption } from '@/lib/shipping';
@@ -30,23 +29,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [step, setStep] = useState<'product' | 'form' | 'pix'>('product');
+  const [step, setStep] = useState<'product' | 'form'>('product');
   const [form, setForm] = useState({
     name: '', cpf: '', phone: '', cep: '', address: '', number: '', city: '', state: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
-  const [pixResult, setPixResult] = useState<ZeroOnePayResult | null>(null);
-  const [copied, setCopied] = useState(false);
   const [shippingOption, setShippingOption] = useState<ShippingOption | null>(null);
-  const pixPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // Para polling de pix_paid quando o PIX estiver exibido
-  React.useEffect(() => {
-    return () => {
-      if (pixPollRef.current) clearInterval(pixPollRef.current);
-    };
-  }, []);
 
   if (!product) return null;
 
@@ -79,48 +68,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     }
   };
 
-  // Inicia polling para detectar pix_paid via edge function de status
-  const startPixPaidPolling = (orderId: string, pixTotal: number) => {
-    if (pixPollRef.current) clearInterval(pixPollRef.current);
-
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    let attempts = 0;
-    const MAX_ATTEMPTS = 40; // 40 * 15s = 10 minutos
-
-    pixPollRef.current = setInterval(async () => {
-      attempts++;
-      if (attempts > MAX_ATTEMPTS) {
-        clearInterval(pixPollRef.current!);
-        return;
-      }
-      try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/check-pix-status`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY },
-          body: JSON.stringify({ orderId }),
-        });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.status === 'paid' || data.status === 'approved' || data.paid === true) {
-          clearInterval(pixPollRef.current!);
-          trackEvent('pix_paid', {
-            productName: product.name,
-            productPrice: basePrice,
-            orderId,
-            amount: pixTotal,
-          });
-          // Redirect to order page
-          if (data.dbOrderId) {
-            onClose();
-            navigate(`/pedido/${data.dbOrderId}`);
-          }
-        }
-      } catch {
-        // silencioso — não quebra o fluxo
-      }
-    }, 15_000); // verifica a cada 15 segundos
-  };
 
   const handleFinish = async () => {
     if (!validate()) return;
@@ -145,7 +92,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
         }],
         totalPrice: pixTotal,
       });
-      setPixResult(result);
+      
 
       // pix_generated: só tracka se gerou com sucesso (tem QR code ou checkout URL)
       if (result.pixQrCode || result.pixQrCodeImage || result.checkoutUrl) {
@@ -173,28 +120,30 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           usedGateway: (result as any).usedGateway,
         });
 
-        // Inicia polling para detectar pagamento
-        if (result.orderId) {
-          startPixPaidPolling(result.orderId, pixTotal);
-        }
       }
 
-      setStep('pix');
+      // Navigate to dedicated PIX page
+      onClose();
+      navigate('/pix', {
+        state: {
+          pixQrCode: result.pixQrCode,
+          pixQrCodeImage: result.pixQrCodeImage,
+          pixAmount: pixTotal,
+          pixPrice,
+          orderId: result.orderId,
+          product: { name: product.name, image: product.image, price: product.price },
+          selectedSize,
+          quantity,
+          usedGateway: (result as any).usedGateway,
+        },
+      });
     } catch (err) {
       console.error('PIX order error:', err);
-      setStep('pix');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCopy = () => {
-    if (pixResult?.pixQrCode) {
-      navigator.clipboard.writeText(pixResult.pixQrCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    }
-  };
 
   const maskPhone = (v: string) => v.replace(/\D/g, '').replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3').slice(0, 15);
   const maskCPF = (v: string) => v.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4').slice(0, 14);
@@ -211,7 +160,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           <div className="flex items-center gap-3">
             <ShoppingBag size={20} className="text-[#f39b19]" />
             <span className="font-black uppercase tracking-widest text-sm">
-              {step === 'pix' ? 'PAGAR VIA PIX' : 'FINALIZAR COMPRA'}
+              FINALIZAR COMPRA
             </span>
           </div>
           <button onClick={onClose} className="hover:text-[#f39b19] transition-colors">
@@ -220,117 +169,35 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
         </div>
 
         {/* PIX Badge */}
-        {step !== 'pix' && (
-          <div className="bg-green-600 px-4 py-2 flex items-center justify-center gap-2 flex-shrink-0">
-            <QrCode size={14} className="text-white" />
-            <span className="text-white text-[11px] font-black uppercase tracking-widest">
-              Pagamento exclusivo via PIX · 10% de desconto
-            </span>
-          </div>
-        )}
+        <div className="bg-green-600 px-4 py-2 flex items-center justify-center gap-2 flex-shrink-0">
+          <QrCode size={14} className="text-white" />
+          <span className="text-white text-[11px] font-black uppercase tracking-widest">
+            Pagamento exclusivo via PIX · 10% de desconto
+          </span>
+        </div>
 
         {/* Progress */}
-        {step !== 'pix' && (
-          <div className="flex border-b border-gray-100 flex-shrink-0">
-            {['product', 'form'].map((s, i) => (
-              <div
-                key={s}
-                className={`flex-1 py-2 text-center text-[10px] font-bold uppercase tracking-widest transition-colors ${
-                  (step === 'product' && i === 0) || (step === 'form' && i === 1)
-                    ? 'bg-[#f39b19] text-white'
-                    : step === 'form' && i === 0
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 text-gray-400'
-                }`}
-              >
-                {i + 1}. {s === 'product' ? 'Produto' : 'Seus Dados'}
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="flex border-b border-gray-100 flex-shrink-0">
+          {['product', 'form'].map((s, i) => (
+            <div
+              key={s}
+              className={`flex-1 py-2 text-center text-[10px] font-bold uppercase tracking-widest transition-colors ${
+                (step === 'product' && i === 0) || (step === 'form' && i === 1)
+                  ? 'bg-[#f39b19] text-white'
+                  : step === 'form' && i === 0
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100 text-gray-400'
+              }`}
+            >
+              {i + 1}. {s === 'product' ? 'Produto' : 'Seus Dados'}
+            </div>
+          ))}
+        </div>
 
         <div className="overflow-y-auto flex-1">
 
-          
-          {/* PIX STEP */}
-          {step === 'pix' && (
-            <div className="flex flex-col items-center py-8 px-8 text-center">
-              <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4">
-                <QrCode size={32} className="text-white" />
-              </div>
-              <h3 className="text-xl font-black uppercase mb-1">PIX Gerado!</h3>
-              <p className="text-gray-500 text-xs mb-5">Escaneie o QR Code ou copie o código para pagar</p>
 
-              {/* QR Code Image */}
-              {pixResult?.pixQrCodeImage ? (
-                <div className="w-48 h-48 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
-                  <img
-                    src={pixResult.pixQrCodeImage.startsWith('data:') ? pixResult.pixQrCodeImage : `data:image/png;base64,${pixResult.pixQrCodeImage}`}
-                    alt="QR Code PIX"
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              ) : pixResult?.pixQrCode ? (
-                <div className="w-48 h-48 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
-                  <QRCodeSVG value={pixResult.pixQrCode} size={176} level="M" />
-                </div>
-              ) : (
-                <div className="w-48 h-48 mb-5 border-4 border-green-500 bg-green-50 flex flex-col items-center justify-center gap-2">
-                  <QrCode size={64} className="text-green-400" />
-                  <span className="text-green-600 text-[10px] font-bold uppercase">QR Code PIX</span>
-                </div>
-              )}
 
-              {/* Valor */}
-              <div className="w-full bg-green-50 border border-green-200 p-3 mb-4 text-center">
-                <p className="text-gray-500 text-[10px] uppercase font-bold mb-1">Valor a pagar (PIX com 10% off)</p>
-                <p className="font-black text-2xl text-green-700">R$ {pixPrice}</p>
-              </div>
-
-              {/* Produto resumo */}
-              <div className="w-full bg-gray-50 border border-gray-200 p-3 mb-4 text-left">
-                <div className="flex gap-3">
-                  <img src={product.image} alt={product.name} className="w-12 h-12 object-cover" />
-                  <div>
-                    <p className="font-black text-xs uppercase">{product.name}</p>
-                    <p className="text-gray-500 text-xs">Tam. {selectedSize} · Qtd. {quantity}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Copia e cola */}
-              {pixResult?.pixQrCode ? (
-                <div className="w-full mb-4">
-                  <p className="text-[10px] font-bold uppercase text-gray-500 mb-2 text-left">Código PIX Copia e Cola</p>
-                  <div className="bg-gray-50 border border-gray-200 p-3 text-left mb-2">
-                    <p className="text-[10px] text-gray-600 break-all font-mono leading-relaxed">{pixResult.pixQrCode}</p>
-                  </div>
-                  <button
-                    onClick={handleCopy}
-                    className={`w-full py-3 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-colors ${
-                      copied ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-[#f39b19]'
-                    }`}
-                  >
-                    {copied ? <><CheckCheck size={14} /> Copiado!</> : <><Copy size={14} /> Copiar Código PIX</>}
-                  </button>
-                </div>
-              ) : (
-                <div className="w-full mb-4">
-                  <p className="text-xs text-gray-500 mb-3">Para pagar, acesse o checkout completo:</p>
-                  <a
-                    href={pixResult?.checkoutUrl || '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-green-600 text-white py-3 font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-green-700 transition-colors"
-                  >
-                    <QrCode size={14} /> Abrir PIX para Pagar
-                  </a>
-                </div>
-              )}
-
-              <button onClick={onClose} className="text-xs text-gray-400 underline">Fechar</button>
-            </div>
-          )}
 
           {/* STEP 1: Produto - use CSS hidden to preserve ShippingCalculator state */}
           <div className={step !== 'product' ? 'hidden' : ''}>
