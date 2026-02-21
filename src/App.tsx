@@ -30,36 +30,36 @@ const Store: React.FC = () => {
   }, []);
 
   return (
-    <CartProvider>
-      <div className="min-h-screen bg-white font-['Maven_Pro',sans-serif]">
-        <Header />
-        <main>
-          <Hero />
-          <Banners />
-          <TNSection />
-          <FemininoSection />
-          <MasculinoSection />
-          <KidsSection />
-          <ComboSection />
-          <ProductGrid title="MAIS VENDIDOS DO DIA" />
-        </main>
-        <Footer />
-        <CartDrawer />
-        <SupportChat />
-        <WelcomePopup />
-      </div>
-    </CartProvider>
+    <div className="min-h-screen bg-white font-['Maven_Pro',sans-serif]">
+      <Header />
+      <main>
+        <Hero />
+        <Banners />
+        <TNSection />
+        <FemininoSection />
+        <MasculinoSection />
+        <KidsSection />
+        <ComboSection />
+        <ProductGrid title="MAIS VENDIDOS DO DIA" />
+      </main>
+      <Footer />
+      <CartDrawer />
+      <SupportChat />
+      <WelcomePopup />
+    </div>
   );
 };
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Store />} />
-        <Route path="/admin" element={<Admin />} />
-      </Routes>
-    </BrowserRouter>
+    <CartProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Store />} />
+          <Route path="/admin" element={<Admin />} />
+        </Routes>
+      </BrowserRouter>
+    </CartProvider>
   );
 }
 
