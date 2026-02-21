@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Order, ORDER_STATUSES } from '@/hooks/useOrders';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
+import { isTrackingExpired } from '@/lib/trackingEvents';
 
 interface OrderTrackerProps {
   orders: Order[];
@@ -107,7 +108,7 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
           </div>
 
           {/* Tracking code */}
-          {order.tracking_code && (
+          {order.tracking_code && !isTrackingExpired(order.created_at) && (
             <div className="mt-4 bg-blue-50 border border-blue-200 p-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-blue-700 mb-2">Rastreamento</p>
               <p className="text-sm font-mono font-bold text-blue-900 mb-2">{order.tracking_code}</p>

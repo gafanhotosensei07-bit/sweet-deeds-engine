@@ -1,55 +1,36 @@
-// Generates realistic tracking events based on order creation date and destination state
-// Simulates a 7-day journey with delays, city transitions and sub-events like Shopee/ML
+// Generates looping tracking events over 7 days, then expires
 
 export interface TrackingEvent {
-  date: string; // ISO date
-  time: string; // HH:MM
+  date: string;
+  time: string;
   status: string;
   description: string;
   location: string;
   type: 'success' | 'info' | 'warning' | 'neutral';
 }
 
-// Centros de distribuição por região
-const DISTRIBUTION_CENTERS: Record<string, string[]> = {
-  SP: ['São Paulo - SP', 'Campinas - SP', 'Guarulhos - SP'],
-  RJ: ['Rio de Janeiro - RJ', 'Niterói - RJ'],
-  MG: ['Belo Horizonte - MG', 'Uberlândia - MG'],
-  PR: ['Curitiba - PR', 'Londrina - PR'],
-  SC: ['Florianópolis - SC', 'Joinville - SC'],
-  RS: ['Porto Alegre - RS', 'Caxias do Sul - RS'],
-  BA: ['Salvador - BA', 'Feira de Santana - BA'],
-  PE: ['Recife - PE', 'Caruaru - PE'],
-  CE: ['Fortaleza - CE'],
-  GO: ['Goiânia - GO', 'Anápolis - GO'],
-  DF: ['Brasília - DF'],
-  PA: ['Belém - PA'],
-  AM: ['Manaus - AM'],
-  MA: ['São Luís - MA'],
-  ES: ['Vitória - ES'],
-  MT: ['Cuiabá - MT'],
-  MS: ['Campo Grande - MS'],
-  RN: ['Natal - RN'],
-  PB: ['João Pessoa - PB'],
-  AL: ['Maceió - AL'],
-  SE: ['Aracaju - SE'],
-  PI: ['Teresina - PI'],
-  TO: ['Palmas - TO'],
-  RO: ['Porto Velho - RO'],
-  AC: ['Rio Branco - AC'],
-  AP: ['Macapá - AP'],
-  RR: ['Boa Vista - RR'],
-};
+const TRANSIT_CITIES = [
+  'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'Ribeirão Preto - SP',
+  'Curitiba - PR', 'Londrina - PR', 'Belo Horizonte - MG', 'Uberlândia - MG',
+  'Rio de Janeiro - RJ', 'Goiânia - GO', 'Brasília - DF', 'Salvador - BA',
+  'Recife - PE', 'Fortaleza - CE', 'Porto Alegre - RS', 'Florianópolis - SC',
+  'Manaus - AM', 'Belém - PA', 'Campo Grande - MS', 'Cuiabá - MT',
+];
 
-function getCity(state: string): string {
-  const cities = DISTRIBUTION_CENTERS[state] || [`Capital - ${state}`];
-  return cities[0];
-}
-
-function getTransitCity(state: string): string {
-  const cities = DISTRIBUTION_CENTERS[state] || [`Capital - ${state}`];
-  return cities.length > 1 ? cities[1] : cities[0];
-}
+const LOOP_EVENTS = [
+  { status: 'Em Trânsito', description: 'Objeto recebido na unidade de tratamento.', type: 'info' as const },
+  { status: 'Em Trânsito', description: 'Objeto encaminhado para a próxima unidade.', type: 'info' as const },
+  { status: 'Atraso Operacional', description: 'Aguardando disponibilidade de transporte para redistribuição.', type: 'warning' as const },
+  { status: 'Em Trânsito', description: 'Objeto em deslocamento — seguindo fluxo normal.', type: 'info' as const },
+  { status: 'Em Trânsito', description: 'Objeto chegou ao centro de triagem regional.', type: 'info' as const },
+  { status: 'Fiscalização', description: 'Objeto retido para conferência na unidade de fiscalização.', type: 'warning' as const },
+  { status: 'Em Trânsito', description: 'Objeto liberado após conferência. Seguindo para destino.', type: 'info' as const },
+  { status: 'Em Trânsito', description: 'Objeto transferido para veículo de longa distância.', type: 'info' as const },
+  { status: 'Atraso por Volume', description: 'Alto volume de encomendas na região. Previsão de normalização em breve.', type: 'warning' as const },
+  { status: 'Em Trânsito', description: 'Objeto redirecionado e em deslocamento.', type: 'info' as const },
+  { status: 'Em Trânsito', description: 'Objeto chegou à unidade intermediária de distribuição.', type: 'info' as const },
+  { status: 'Em Trânsito', description: 'Objeto encaminhado para o centro de distribuição do estado de destino.', type: 'info' as const },
+];
 
 function addHours(date: Date, hours: number): Date {
   return new Date(date.getTime() + hours * 60 * 60 * 1000);
@@ -63,192 +44,92 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+// Seeded random for consistent events per order
+function seededRandom(seed: number): () => number {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
+}
+
+export function isTrackingExpired(createdAt: string): boolean {
+  const created = new Date(createdAt);
+  const now = new Date();
+  const diffMs = now.getTime() - created.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+  return diffDays >= 7;
+}
+
 export function generateTrackingEvents(
   createdAt: string,
-  destinationState: string | null,
-  currentStatus: string,
-  customerCity: string | null
+  _destinationState: string | null,
+  _currentStatus: string,
+  _customerCity: string | null
 ): TrackingEvent[] {
   const events: TrackingEvent[] = [];
   const orderDate = new Date(createdAt);
-  const destState = destinationState?.toUpperCase() || 'SP';
-  const destCity = customerCity || getCity(destState);
   const now = new Date();
 
-  // Origem sempre de São Paulo (CD principal)
-  const origin = 'Centro de Distribuição - São Paulo, SP';
+  // Seed from order timestamp for consistency
+  const seed = orderDate.getTime() % 2147483647;
+  const rng = seededRandom(seed);
 
-  // DIA 0 — Pedido confirmado
-  const d0 = orderDate;
+  // Initial events
   events.push({
-    date: formatDate(d0),
-    time: formatTime(d0),
+    date: formatDate(orderDate),
+    time: formatTime(orderDate),
     status: 'Pedido Confirmado',
-    description: 'Seu pedido foi recebido e está aguardando confirmação de pagamento.',
+    description: 'Seu pedido foi recebido e confirmado.',
     location: 'Loja Online',
     type: 'info',
   });
 
-  // DIA 0 + 2h — Pagamento aprovado (se status >= paid)
-  const statusOrder = ['confirmed', 'paid', 'packaging', 'shipped', 'in_transit', 'delivered'];
-  const currentIdx = statusOrder.indexOf(currentStatus);
+  events.push({
+    date: formatDate(addHours(orderDate, 1)),
+    time: formatTime(addHours(orderDate, 1)),
+    status: 'Pagamento Aprovado',
+    description: 'Pagamento via PIX confirmado com sucesso.',
+    location: 'Sistema de Pagamento',
+    type: 'success',
+  });
 
-  if (currentIdx >= 1) {
-    const d0_pay = addHours(d0, 2);
+  events.push({
+    date: formatDate(addHours(orderDate, 6)),
+    time: formatTime(addHours(orderDate, 6)),
+    status: 'Objeto Postado',
+    description: 'Objeto coletado pela transportadora no centro de distribuição.',
+    location: 'Centro de Distribuição - São Paulo, SP',
+    type: 'success',
+  });
+
+  // Loop events every ~4 hours for 7 days (168 hours)
+  // Only show events that have "happened" (before now)
+  const maxHours = 168; // 7 days
+  let hour = 10; // start after initial events
+  let eventIdx = 0;
+
+  while (hour < maxHours) {
+    const eventTime = addHours(orderDate, hour);
+    if (eventTime > now) break;
+
+    const loopEvent = LOOP_EVENTS[eventIdx % LOOP_EVENTS.length];
+    const cityIdx = Math.floor(rng() * TRANSIT_CITIES.length);
+    const city = TRANSIT_CITIES[cityIdx];
+
     events.push({
-      date: formatDate(d0_pay),
-      time: formatTime(d0_pay),
-      status: 'Pagamento Aprovado',
-      description: 'Pagamento via PIX confirmado. Seu pedido será preparado em breve.',
-      location: 'Sistema de Pagamento',
-      type: 'success',
+      date: formatDate(eventTime),
+      time: formatTime(eventTime),
+      status: loopEvent.status,
+      description: loopEvent.description,
+      location: `Unidade de Tratamento - ${city}`,
+      type: loopEvent.type,
     });
+
+    eventIdx++;
+    // Vary interval: 3-6 hours
+    hour += 3 + Math.floor(rng() * 4);
   }
 
-  // DIA 1 — Em embalagem
-  if (currentIdx >= 2) {
-    const d1 = addHours(d0, 18);
-    events.push({
-      date: formatDate(d1),
-      time: formatTime(d1),
-      status: 'Pedido em Separação',
-      description: 'Seu pedido foi enviado ao setor de separação no centro de distribuição.',
-      location: origin,
-      type: 'info',
-    });
-
-    const d1b = addHours(d0, 24);
-    events.push({
-      date: formatDate(d1b),
-      time: formatTime(d1b),
-      status: 'Embalagem em Andamento',
-      description: 'Produto sendo embalado com cuidado para garantir a segurança na entrega.',
-      location: origin,
-      type: 'info',
-    });
-  }
-
-  // DIA 2 — Enviado / Coletado
-  if (currentIdx >= 3) {
-    const d2 = addHours(d0, 38);
-    events.push({
-      date: formatDate(d2),
-      time: formatTime(d2),
-      status: 'Objeto Postado',
-      description: 'Objeto postado e coletado pela transportadora.',
-      location: origin,
-      type: 'success',
-    });
-
-    // DIA 2 + 6h — Saiu do CD
-    const d2b = addHours(d0, 44);
-    events.push({
-      date: formatDate(d2b),
-      time: formatTime(d2b),
-      status: 'Saiu para Transporte',
-      description: 'Objeto saiu do centro de distribuição com destino ao seu estado.',
-      location: origin,
-      type: 'info',
-    });
-  }
-
-  // DIA 3-6 — Em trânsito com eventos detalhados
-  if (currentIdx >= 4) {
-    // DIA 3 — Chegou em hub intermediário
-    const d3 = addHours(d0, 68);
-    const hubCity = destState === 'SP' ? 'Guarulhos - SP' : 'Campinas - SP';
-    events.push({
-      date: formatDate(d3),
-      time: formatTime(d3),
-      status: 'Em Trânsito',
-      description: `Objeto chegou à unidade de tratamento.`,
-      location: `Centro de Tratamento - ${hubCity}`,
-      type: 'info',
-    });
-
-    // DIA 3 + 8h — Saiu do hub
-    const d3b = addHours(d0, 76);
-    events.push({
-      date: formatDate(d3b),
-      time: formatTime(d3b),
-      status: 'Em Trânsito',
-      description: 'Objeto encaminhado para a próxima unidade de distribuição.',
-      location: `Centro de Tratamento - ${hubCity}`,
-      type: 'info',
-    });
-
-    // DIA 4 — Atraso (situação real)
-    if (destState !== 'SP') {
-      const d4 = addHours(d0, 96);
-      events.push({
-        date: formatDate(d4),
-        time: formatTime(d4),
-        status: 'Atraso no Transporte',
-        description: 'Objeto aguardando redistribuição devido ao alto volume de encomendas na região.',
-        location: `Centro Logístico - Guarulhos, SP`,
-        type: 'warning',
-      });
-
-      // DIA 4 + 14h — Saiu do atraso
-      const d4b = addHours(d0, 110);
-      events.push({
-        date: formatDate(d4b),
-        time: formatTime(d4b),
-        status: 'Em Trânsito',
-        description: 'Objeto redirecionado e em deslocamento para a unidade de destino.',
-        location: `Rodoviária de Cargas - São Paulo, SP`,
-        type: 'info',
-      });
-    }
-
-    // DIA 5 — Chegou no estado destino
-    const d5 = addHours(d0, 126);
-    const transitCity = getTransitCity(destState);
-    events.push({
-      date: formatDate(d5),
-      time: formatTime(d5),
-      status: 'Chegou ao Estado de Destino',
-      description: `Objeto recebido na unidade de distribuição regional.`,
-      location: `Centro de Distribuição - ${transitCity}`,
-      type: 'info',
-    });
-
-    // DIA 6 — Em rota de entrega
-    const d6 = addHours(d0, 148);
-    events.push({
-      date: formatDate(d6),
-      time: formatTime(d6),
-      status: 'Objeto em Rota de Entrega',
-      description: 'Objeto encaminhado para a unidade de entrega mais próxima do destinatário.',
-      location: `Unidade Local - ${destCity}`,
-      type: 'info',
-    });
-
-    // DIA 7 — Saiu para entrega
-    const d7 = addHours(d0, 160);
-    events.push({
-      date: formatDate(d7),
-      time: formatTime(d7),
-      status: 'Saiu para Entrega',
-      description: 'Objeto com o entregador, a caminho do seu endereço.',
-      location: `Unidade de Entrega - ${destCity}`,
-      type: 'success',
-    });
-  }
-
-  // Entregue
-  if (currentIdx >= 5) {
-    const d7b = addHours(d0, 168);
-    events.push({
-      date: formatDate(d7b),
-      time: formatTime(d7b),
-      status: 'Entregue',
-      description: 'Objeto entregue ao destinatário. Obrigado por comprar conosco!',
-      location: destCity,
-      type: 'success',
-    });
-  }
-
-  // Return in reverse chronological order (most recent first)
   return events.reverse();
 }
