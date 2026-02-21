@@ -4,6 +4,8 @@ import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
 import { QRCodeSVG } from 'qrcode.react';
 import OrderTracker from './OrderTracker';
+import ShippingCalculator from './ShippingCalculator';
+import { ShippingOption } from '@/lib/shipping';
 
 const CartDrawer: React.FC = () => {
   const { items, isOpen, closeCart, removeItem, updateQuantity, totalItems, totalPrice, clearCart, orders, ordersLoading, createOrder } = useCart();
@@ -13,8 +15,10 @@ const CartDrawer: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pixResult, setPixResult] = useState<ZeroOnePayResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(null);
 
-  const pixTotal = (totalPrice * 0.9).toFixed(2).replace('.', ',');
+  const shippingCost = shippingOption?.price || 0;
+  const pixTotal = ((totalPrice * 0.9) + shippingCost).toFixed(2).replace('.', ',');
   const pixDiscount = (totalPrice * 0.1).toFixed(2).replace('.', ',');
   const subtotalStr = totalPrice.toFixed(2).replace('.', ',');
 
@@ -267,6 +271,16 @@ const CartDrawer: React.FC = () => {
                     })}
                   </div>
 
+                  {/* Shipping Calculator */}
+                  <div className="mb-5">
+                    <ShippingCalculator
+                      cartTotal={totalPrice}
+                      onSelectOption={setShippingOption}
+                      selectedOptionId={shippingOption?.id}
+                      compact
+                    />
+                  </div>
+
                   {/* Summary */}
                   <div className="bg-green-50 border border-green-200 p-4 mb-5">
                     <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -275,8 +289,13 @@ const CartDrawer: React.FC = () => {
                     <div className="flex justify-between text-xs text-green-600 mb-1">
                       <span>Desconto PIX (10%)</span><span>-R$ {pixDiscount}</span>
                     </div>
-                    <div className="flex justify-between text-xs text-green-600 mb-1">
-                      <span>Frete</span><span className="font-bold">GRÁTIS</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className={shippingCost === 0 ? 'text-green-600' : 'text-gray-500'}>
+                        Frete {shippingOption ? `(${shippingOption.name})` : ''}
+                      </span>
+                      <span className={`font-bold ${shippingCost === 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                        {shippingCost === 0 ? 'GRÁTIS' : `R$ ${shippingCost.toFixed(2).replace('.', ',')}`}
+                      </span>
                     </div>
                     <div className="border-t border-green-200 pt-2 mt-2 flex justify-between items-center">
                       <span className="font-black text-sm uppercase">Total PIX</span>
