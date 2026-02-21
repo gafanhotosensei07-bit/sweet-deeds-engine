@@ -1,4 +1,4 @@
-// Generates looping tracking events over 7 days, then expires
+// Generates looping tracking events over 7 days based on real route, then expires
 
 export interface TrackingEvent {
   date: string;
@@ -9,13 +9,38 @@ export interface TrackingEvent {
   type: 'success' | 'info' | 'warning' | 'neutral';
 }
 
-const TRANSIT_CITIES = [
-  'São Paulo - SP', 'Guarulhos - SP', 'Campinas - SP', 'Ribeirão Preto - SP',
-  'Curitiba - PR', 'Londrina - PR', 'Belo Horizonte - MG', 'Uberlândia - MG',
-  'Rio de Janeiro - RJ', 'Goiânia - GO', 'Brasília - DF', 'Salvador - BA',
-  'Recife - PE', 'Fortaleza - CE', 'Porto Alegre - RS', 'Florianópolis - SC',
-  'Manaus - AM', 'Belém - PA', 'Campo Grande - MS', 'Cuiabá - MT',
-];
+// Real route maps: from São Paulo to destination state, with intermediate cities
+const ROUTES: Record<string, string[]> = {
+  'SP': ['Guarulhos - SP', 'Campinas - SP', 'Ribeirão Preto - SP'],
+  'RJ': ['Guarulhos - SP', 'Volta Redonda - RJ', 'Niterói - RJ', 'Rio de Janeiro - RJ'],
+  'MG': ['Guarulhos - SP', 'Pouso Alegre - MG', 'Varginha - MG', 'Belo Horizonte - MG'],
+  'PR': ['Guarulhos - SP', 'Registro - SP', 'Curitiba - PR', 'Londrina - PR'],
+  'SC': ['Guarulhos - SP', 'Curitiba - PR', 'Joinville - SC', 'Florianópolis - SC'],
+  'RS': ['Guarulhos - SP', 'Curitiba - PR', 'Florianópolis - SC', 'Porto Alegre - RS'],
+  'BA': ['Guarulhos - SP', 'Belo Horizonte - MG', 'Vitória da Conquista - BA', 'Salvador - BA'],
+  'PE': ['Guarulhos - SP', 'Salvador - BA', 'Aracaju - SE', 'Recife - PE'],
+  'CE': ['Guarulhos - SP', 'Salvador - BA', 'Teresina - PI', 'Fortaleza - CE'],
+  'GO': ['Guarulhos - SP', 'Uberlândia - MG', 'Goiânia - GO'],
+  'DF': ['Guarulhos - SP', 'Uberlândia - MG', 'Brasília - DF'],
+  'PA': ['Guarulhos - SP', 'Brasília - DF', 'Palmas - TO', 'Marabá - PA', 'Belém - PA'],
+  'AM': ['Guarulhos - SP', 'Brasília - DF', 'Palmas - TO', 'Belém - PA', 'Manaus - AM'],
+  'MA': ['Guarulhos - SP', 'Salvador - BA', 'Teresina - PI', 'São Luís - MA'],
+  'MT': ['Guarulhos - SP', 'Campo Grande - MS', 'Cuiabá - MT'],
+  'MS': ['Guarulhos - SP', 'Presidente Prudente - SP', 'Campo Grande - MS'],
+  'ES': ['Guarulhos - SP', 'Juiz de Fora - MG', 'Vitória - ES'],
+  'PI': ['Guarulhos - SP', 'Salvador - BA', 'Teresina - PI'],
+  'RN': ['Guarulhos - SP', 'Recife - PE', 'João Pessoa - PB', 'Natal - RN'],
+  'PB': ['Guarulhos - SP', 'Recife - PE', 'João Pessoa - PB'],
+  'AL': ['Guarulhos - SP', 'Salvador - BA', 'Aracaju - SE', 'Maceió - AL'],
+  'SE': ['Guarulhos - SP', 'Salvador - BA', 'Aracaju - SE'],
+  'TO': ['Guarulhos - SP', 'Uberlândia - MG', 'Palmas - TO'],
+  'RO': ['Guarulhos - SP', 'Cuiabá - MT', 'Porto Velho - RO'],
+  'AC': ['Guarulhos - SP', 'Cuiabá - MT', 'Porto Velho - RO', 'Rio Branco - AC'],
+  'AP': ['Guarulhos - SP', 'Belém - PA', 'Macapá - AP'],
+  'RR': ['Guarulhos - SP', 'Manaus - AM', 'Boa Vista - RR'],
+};
+
+const DEFAULT_ROUTE = ['Guarulhos - SP', 'Campinas - SP', 'Ribeirão Preto - SP', 'Uberlândia - MG'];
 
 const LOOP_EVENTS = [
   { status: 'Em Trânsito', description: 'Objeto recebido na unidade de tratamento.', type: 'info' as const },
@@ -44,7 +69,6 @@ function formatTime(date: Date): string {
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
-// Seeded random for consistent events per order
 function seededRandom(seed: number): () => number {
   let s = seed;
   return () => {
@@ -63,17 +87,35 @@ export function isTrackingExpired(createdAt: string): boolean {
 
 export function generateTrackingEvents(
   createdAt: string,
-  _destinationState: string | null,
+  destinationState: string | null,
   _currentStatus: string,
-  _customerCity: string | null
+  customerCity: string | null
 ): TrackingEvent[] {
   const events: TrackingEvent[] = [];
   const orderDate = new Date(createdAt);
   const now = new Date();
 
-  // Seed from order timestamp for consistency
   const seed = orderDate.getTime() % 2147483647;
   const rng = seededRandom(seed);
+
+  // Get the route for this destination
+  const stateKey = (destinationState || '').toUpperCase().trim();
+  const routeCities = ROUTES[stateKey] || DEFAULT_ROUTE;
+
+  // If customer city is known and not already last in route, append it
+  const finalCity = customerCity
+    ? `${customerCity} - ${stateKey || 'BR'}`
+    : routeCities[routeCities.length - 1];
+
+  // Build full location cycle: route cities loop, mixing with the route
+  const allLocations: string[] = [];
+  for (const city of routeCities) {
+    allLocations.push(`Unidade de Tratamento - ${city}`);
+  }
+  // After route cities, loop back through them
+  for (const city of [...routeCities].reverse()) {
+    allLocations.push(`Centro de Distribuição - ${city}`);
+  }
 
   // Initial events
   events.push({
@@ -103,31 +145,30 @@ export function generateTrackingEvents(
     type: 'success',
   });
 
-  // Loop events every ~4 hours for 7 days (168 hours)
-  // Only show events that have "happened" (before now)
-  const maxHours = 168; // 7 days
-  let hour = 10; // start after initial events
+  // Loop events every ~4 hours for 7 days
+  const maxHours = 168;
+  let hour = 10;
   let eventIdx = 0;
+  let locationIdx = 0;
 
   while (hour < maxHours) {
     const eventTime = addHours(orderDate, hour);
     if (eventTime > now) break;
 
     const loopEvent = LOOP_EVENTS[eventIdx % LOOP_EVENTS.length];
-    const cityIdx = Math.floor(rng() * TRANSIT_CITIES.length);
-    const city = TRANSIT_CITIES[cityIdx];
+    const location = allLocations[locationIdx % allLocations.length];
 
     events.push({
       date: formatDate(eventTime),
       time: formatTime(eventTime),
       status: loopEvent.status,
       description: loopEvent.description,
-      location: `Unidade de Tratamento - ${city}`,
+      location,
       type: loopEvent.type,
     });
 
     eventIdx++;
-    // Vary interval: 3-6 hours
+    locationIdx++;
     hour += 3 + Math.floor(rng() * 4);
   }
 
