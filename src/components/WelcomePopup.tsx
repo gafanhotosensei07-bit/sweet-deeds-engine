@@ -21,15 +21,15 @@ const WelcomePopup: React.FC = () => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm"
       onClick={handleClose}
     >
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-300"
+        className="relative bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in slide-in-from-bottom sm:zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header laranja */}
-        <div className="bg-[#f39b19] px-6 pt-8 pb-10 text-center relative">
+        <div className="bg-[#f39b19] px-4 sm:px-6 pt-6 sm:pt-8 pb-8 sm:pb-10 text-center relative">
           <button
             onClick={handleClose}
             className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors"
@@ -39,9 +39,9 @@ const WelcomePopup: React.FC = () => {
           <img
             src="https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392116568-0.png"
             alt="White Elephant Logo"
-            className="h-14 mx-auto mb-3 brightness-0 invert"
+            className="h-10 sm:h-14 mx-auto mb-2 sm:mb-3 brightness-0 invert"
           />
-          <h2 className="text-white text-2xl font-black uppercase tracking-tight leading-tight">
+          <h2 className="text-white text-xl sm:text-2xl font-black uppercase tracking-tight leading-tight">
             Bem-vindo à<br />White Elephant! 🐘
           </h2>
           <p className="text-white/90 text-sm mt-2 font-medium">
@@ -55,7 +55,7 @@ const WelcomePopup: React.FC = () => {
         </div>
 
         {/* Conteúdo */}
-        <div className="px-6 pt-4 pb-6">
+        <div className="px-4 sm:px-6 pt-3 sm:pt-4 pb-4 sm:pb-6">
           <p className="text-gray-600 text-sm text-center mb-5">
             Aqui você encontra Nike, Adidas, Vans e muito mais com frete expresso para todo o Brasil!
           </p>

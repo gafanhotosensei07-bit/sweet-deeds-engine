@@ -41,11 +41,11 @@ const Banners: React.FC = () => {
               alt={b.alt}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
             />
-            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-end p-6">
-              <span className="text-white font-black text-xl uppercase">{b.label}</span>
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors flex items-end p-2 md:p-6">
+              <span className="text-white font-black text-[10px] md:text-xl uppercase">{b.label}</span>
             </div>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="bg-[#f39b19] text-black text-xs font-black uppercase tracking-widest px-4 py-2">
+              <span className="bg-[#f39b19] text-black text-[8px] md:text-xs font-black uppercase tracking-widest px-2 md:px-4 py-1 md:py-2">
                 Ver Seção →
               </span>
             </div>

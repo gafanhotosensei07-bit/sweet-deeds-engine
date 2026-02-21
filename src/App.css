@@ -1,4 +1,9 @@
 /* App.css - Reset defaults for full-width layout */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 #root {
   width: 100%;
   max-width: 100%;
