@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Order, ORDER_STATUSES } from '@/hooks/useOrders';
-import { Package, Truck, Shield, Copy, CheckCheck, ArrowLeft, MapPin } from 'lucide-react';
+import { Package, Truck, Shield, Copy, CheckCheck, ArrowLeft, MapPin, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { generateTrackingEvents, TrackingEvent } from '@/lib/trackingEvents';
 
 const statusIndex = (status: string) => ORDER_STATUSES.findIndex(s => s.key === status);
 
 const OrderPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<(Order & { shipping_state?: string; shipping_city?: string }) | null>(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -70,6 +71,15 @@ const OrderPage: React.FC = () => {
 
   const currentIdx = statusIndex(order.status);
   const isPaid = order.payment_status === 'paid' || order.status === 'paid' || currentIdx >= 1;
+
+  const trackingEvents = useMemo(() => {
+    return generateTrackingEvents(
+      order.created_at,
+      order.shipping_state || null,
+      order.status,
+      order.shipping_city || null
+    );
+  }, [order.created_at, order.shipping_state, order.status, order.shipping_city]);
 
   return (
     <div className="min-h-screen bg-gray-50 font-['Maven_Pro',sans-serif]">
@@ -169,41 +179,51 @@ const OrderPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Timeline */}
+        {/* Rastreamento Detalhado */}
         <div className="bg-white border border-gray-200 p-5">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-4">Status do Pedido</p>
-          <div className="relative pl-6">
-            {ORDER_STATUSES.map((step, i) => {
-              const isCompleted = i <= currentIdx;
-              const isCurrent = i === currentIdx;
-              const historyEntry = order.status_history.find(h => h.status === step.key);
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Rastreamento do Pedido</p>
+            <span className="text-[9px] text-gray-400">{trackingEvents.length} atualizações</span>
+          </div>
+
+          <div className="relative pl-7">
+            {trackingEvents.map((event, i) => {
+              const isFirst = i === 0;
+              const iconColor = event.type === 'success' ? 'text-green-600' : event.type === 'warning' ? 'text-yellow-600' : 'text-blue-500';
+              const bgColor = event.type === 'success' ? 'bg-green-500 border-green-500' : event.type === 'warning' ? 'bg-yellow-500 border-yellow-500' : 'bg-blue-500 border-blue-500';
+              const EventIcon = event.type === 'success' ? CheckCircle : event.type === 'warning' ? AlertTriangle : Info;
 
               return (
-                <div key={step.key} className="relative pb-6 last:pb-0">
-                  {i < ORDER_STATUSES.length - 1 && (
-                    <div className={`absolute left-[-15px] top-5 w-0.5 h-full ${
-                      i < currentIdx ? 'bg-green-500' : 'bg-gray-200'
-                    }`} />
+                <div key={i} className={`relative pb-5 last:pb-0 ${isFirst ? '' : ''}`}>
+                  {/* Line */}
+                  {i < trackingEvents.length - 1 && (
+                    <div className="absolute left-[-18px] top-5 w-0.5 h-full bg-gray-200" />
                   )}
-                  <div className={`absolute left-[-20px] top-0.5 w-[11px] h-[11px] rounded-full border-2 ${
-                    isCurrent ? 'bg-[#f39b19] border-[#f39b19] ring-4 ring-[#f39b19]/20' :
-                    isCompleted ? 'bg-green-500 border-green-500' :
-                    'bg-white border-gray-300'
+                  {/* Dot */}
+                  <div className={`absolute left-[-22px] top-0.5 w-[13px] h-[13px] rounded-full border-2 ${
+                    isFirst ? `${bgColor} ring-4 ring-opacity-20 ${event.type === 'success' ? 'ring-green-500' : event.type === 'warning' ? 'ring-yellow-500' : 'ring-blue-500'}` : 'bg-gray-300 border-gray-300'
                   }`} />
-                  <div>
-                    <p className={`text-[11px] font-black uppercase tracking-wider leading-none ${
-                      isCompleted ? 'text-gray-800' : 'text-gray-300'
-                    }`}>
-                      {step.icon} {step.label}
-                    </p>
-                    {isCompleted && (
-                      <p className="text-[10px] text-gray-400 mt-0.5">{step.description}</p>
-                    )}
-                    {historyEntry && (
-                      <p className="text-[9px] text-gray-300 mt-0.5">
-                        {new Date(historyEntry.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    )}
+                  {/* Content */}
+                  <div className={`${isFirst ? 'bg-gray-50 border border-gray-100 p-3 -mt-1' : ''}`}>
+                    <div className="flex items-start gap-2">
+                      <EventIcon size={14} className={`${iconColor} mt-0.5 flex-shrink-0`} />
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[11px] font-black uppercase tracking-wider leading-tight ${
+                          event.type === 'warning' ? 'text-yellow-700' : event.type === 'success' ? 'text-green-700' : 'text-gray-800'
+                        }`}>
+                          {event.status}
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">{event.description}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[9px] text-gray-400 flex items-center gap-1">
+                            <MapPin size={8} /> {event.location}
+                          </span>
+                          <span className="text-[9px] text-gray-300">
+                            {new Date(event.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} às {event.time}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               );
