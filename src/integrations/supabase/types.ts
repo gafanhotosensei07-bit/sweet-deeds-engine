@@ -83,6 +83,87 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          created_at: string
+          customer_cpf: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          discount: number
+          estimated_delivery: string | null
+          id: string
+          items: Json
+          order_number: string
+          payment_method: string | null
+          payment_status: string | null
+          pix_order_id: string | null
+          session_id: string | null
+          shipping_address: string | null
+          shipping_cep: string | null
+          shipping_city: string | null
+          shipping_state: string | null
+          status: string
+          status_history: Json
+          subtotal: number
+          total: number
+          tracking_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          discount?: number
+          estimated_delivery?: string | null
+          id?: string
+          items?: Json
+          order_number?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          pix_order_id?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          shipping_cep?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          status?: string
+          status_history?: Json
+          subtotal?: number
+          total?: number
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          discount?: number
+          estimated_delivery?: string | null
+          id?: string
+          items?: Json
+          order_number?: string
+          payment_method?: string | null
+          payment_status?: string | null
+          pix_order_id?: string | null
+          session_id?: string | null
+          shipping_address?: string | null
+          shipping_cep?: string | null
+          shipping_city?: string | null
+          shipping_state?: string | null
+          status?: string
+          status_history?: Json
+          subtotal?: number
+          total?: number
+          tracking_code?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

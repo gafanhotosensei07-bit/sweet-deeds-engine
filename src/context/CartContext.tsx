@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { CheckoutProduct } from '@/components/CheckoutModal';
+import { useOrders, Order } from '@/hooks/useOrders';
 
 export interface CartItem {
   product: CheckoutProduct;
@@ -18,6 +19,10 @@ interface CartContextType {
   closeCart: () => void;
   totalItems: number;
   totalPrice: number;
+  orders: Order[];
+  ordersLoading: boolean;
+  createOrder: ReturnType<typeof useOrders>['createOrder'];
+  refreshOrders: () => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -25,6 +30,7 @@ const CartContext = createContext<CartContextType | null>(null);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const { orders, loading: ordersLoading, createOrder, fetchOrders } = useOrders();
 
   const addItem = useCallback((product: CheckoutProduct, size: string, quantity: number) => {
     setItems(prev => {
@@ -60,6 +66,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = useCallback(() => setItems([]), []);
   const openCart = useCallback(() => setIsOpen(true), []);
   const closeCart = useCallback(() => setIsOpen(false), []);
+  const refreshOrders = useCallback(() => fetchOrders(), [fetchOrders]);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
   const totalPrice = items.reduce((sum, i) => {
@@ -68,7 +75,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, 0);
 
   return (
-    <CartContext.Provider value={{ items, isOpen, addItem, removeItem, updateQuantity, clearCart, openCart, closeCart, totalItems, totalPrice }}>
+    <CartContext.Provider value={{ items, isOpen, addItem, removeItem, updateQuantity, clearCart, openCart, closeCart, totalItems, totalPrice, orders, ordersLoading, createOrder, refreshOrders }}>
       {children}
     </CartContext.Provider>
   );
