@@ -74,7 +74,6 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
 
   const handleNext = () => {
     if (validate()) {
-      addItem(product, selectedSize, quantity);
       setStep('form');
     }
   };
