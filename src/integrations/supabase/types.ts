@@ -109,6 +109,7 @@ export type Database = {
           total: number
           tracking_code: string | null
           updated_at: string
+          used_gateway: string | null
         }
         Insert: {
           created_at?: string
@@ -135,6 +136,7 @@ export type Database = {
           total?: number
           tracking_code?: string | null
           updated_at?: string
+          used_gateway?: string | null
         }
         Update: {
           created_at?: string
@@ -161,6 +163,7 @@ export type Database = {
           total?: number
           tracking_code?: string | null
           updated_at?: string
+          used_gateway?: string | null
         }
         Relationships: []
       }

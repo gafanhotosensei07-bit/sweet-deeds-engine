@@ -170,6 +170,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
           subtotal: basePrice * quantity,
           discount: basePrice * quantity * 0.1,
           pixOrderId: result.orderId,
+          usedGateway: (result as any).usedGateway,
         });
 
         // Inicia polling para detectar pagamento
