@@ -1,6 +1,6 @@
 // ZeroOnePay API Integration via Edge Function (proxy to avoid CORS)
-const OFFER_HASH = 'rxcfh4s38y';
-export const CHECKOUT_URL = `https://go.zeroonepay.com.br/${OFFER_HASH}`;
+// Fallback URL removido — PIX é gerado inline via edge function
+export const CHECKOUT_URL = '';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
