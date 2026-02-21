@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2, Copy, CheckCheck } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
 import { trackEvent } from '@/lib/analytics';
@@ -268,6 +269,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                     alt="QR Code PIX"
                     className="w-full h-full object-contain"
                   />
+                </div>
+              ) : pixResult?.pixQrCode ? (
+                <div className="w-48 h-48 mb-5 border-4 border-green-500 p-1 bg-white flex items-center justify-center">
+                  <QRCodeSVG value={pixResult.pixQrCode} size={176} level="M" />
                 </div>
               ) : (
                 <div className="w-48 h-48 mb-5 border-4 border-green-500 bg-green-50 flex flex-col items-center justify-center gap-2">
