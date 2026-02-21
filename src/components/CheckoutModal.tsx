@@ -201,10 +201,10 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const maskCEP = (v: string) => v.replace(/\D/g, '').replace(/(\d{5})(\d{3})/, '$1-$2').slice(0, 9);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full md:max-w-xl max-h-[95vh] md:max-h-[90vh] bg-white overflow-hidden flex flex-col shadow-2xl">
+      <div className="relative w-full max-w-md h-full bg-white overflow-hidden flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
 
         {/* Header */}
         <div className="bg-black text-white px-6 py-4 flex items-center justify-between flex-shrink-0">
