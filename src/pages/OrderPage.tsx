@@ -120,18 +120,18 @@ const OrderPage: React.FC = () => {
           <div className="bg-blue-50 border border-blue-200 p-5">
             <div className="flex items-center gap-2 mb-3">
               <Truck size={16} className="text-blue-600" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-blue-700">Rastreamento</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-700">Código de Rastreio</span>
             </div>
-            <div className="bg-white border border-blue-200 p-3 space-y-3">
+            <div className="bg-white border border-blue-200 p-3 flex items-center justify-between">
               <p className="font-mono font-bold text-blue-900 text-lg tracking-wider">{order.tracking_code}</p>
-              <a
-                href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-colors"
+              <button
+                onClick={handleCopyTracking}
+                className={`flex items-center gap-1 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                  copied ? 'bg-green-600 text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                <Truck size={14} /> Rastrear Meu Pedido
-              </a>
+                {copied ? <><CheckCheck size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
+              </button>
             </div>
           </div>
         )}
