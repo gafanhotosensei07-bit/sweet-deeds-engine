@@ -8,6 +8,8 @@ export interface Order {
   status: string;
   payment_status: string;
   total: number;
+  subtotal: number;
+  discount: number;
   items: Array<{
     name: string;
     image: string;
