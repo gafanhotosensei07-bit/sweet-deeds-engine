@@ -9,6 +9,16 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+function generateTrackingCode(): string {
+  const prefix = 'WE';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = prefix;
+  for (let i = 0; i < 9; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code + 'BR';
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -79,7 +89,43 @@ Deno.serve(async (req) => {
       console.warn('check-pix-status gateway error:', err);
     }
 
-    return new Response(JSON.stringify({ status, orderId }), {
+    // Se o pagamento foi confirmado, atualiza o pedido com código de rastreio
+    let trackingCode: string | null = null;
+    let dbOrderId: string | null = null;
+
+    if (status === 'paid') {
+      // Busca o pedido pelo pix_order_id
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('id, status, tracking_code, status_history')
+        .eq('pix_order_id', orderId)
+        .limit(1);
+
+      const order = orderData?.[0];
+      if (order && order.status !== 'paid' && order.status !== 'delivered') {
+        trackingCode = generateTrackingCode();
+        const now = new Date().toISOString();
+        const history = Array.isArray(order.status_history) ? order.status_history : [];
+        history.push({ status: 'paid', label: 'Pagamento Aprovado', date: now });
+
+        await supabase
+          .from('orders')
+          .update({
+            status: 'paid',
+            payment_status: 'paid',
+            tracking_code: trackingCode,
+            status_history: history,
+          })
+          .eq('id', order.id);
+
+        dbOrderId = order.id;
+      } else if (order) {
+        trackingCode = order.tracking_code;
+        dbOrderId = order.id;
+      }
+    }
+
+    return new Response(JSON.stringify({ status, orderId, trackingCode, dbOrderId }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 

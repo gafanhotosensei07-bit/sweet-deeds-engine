@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2, Copy, CheckCheck } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
@@ -25,6 +26,7 @@ const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44']
 
 const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const { addItem, createOrder } = useCart();
+  const navigate = useNavigate();
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [step, setStep] = useState<'product' | 'form' | 'pix'>('product');
@@ -108,6 +110,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
             orderId,
             amount: pixTotal,
           });
+          // Redirect to order page
+          if (data.dbOrderId) {
+            onClose();
+            navigate(`/pedido/${data.dbOrderId}`);
+          }
         }
       } catch {
         // silencioso — não quebra o fluxo

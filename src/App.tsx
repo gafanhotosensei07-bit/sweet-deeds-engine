@@ -15,13 +15,13 @@ import SupportChat from './components/SupportChat';
 import WelcomePopup from './components/WelcomePopup';
 import { CartProvider } from './context/CartContext';
 import Admin from './pages/Admin';
+import OrderPage from './pages/OrderPage';
 import { trackEvent } from './lib/analytics';
 
 const Store: React.FC = () => {
   useEffect(() => {
-    // Deduplicação: 1 page_view por janela de 30 minutos por navegador
     const key = 'we_pv_ts';
-    const TTL = 30 * 60 * 1000; // 30 minutos
+    const TTL = 30 * 60 * 1000;
     const last = parseInt(localStorage.getItem(key) || '0', 10);
     if (Date.now() - last > TTL) {
       trackEvent('page_view');
@@ -57,6 +57,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Store />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/pedido/:id" element={<OrderPage />} />
         </Routes>
       </BrowserRouter>
     </CartProvider>
