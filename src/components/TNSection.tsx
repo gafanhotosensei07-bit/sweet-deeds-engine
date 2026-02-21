@@ -151,6 +151,7 @@ const TNSection: React.FC = () => {
         </div>
       </section>
 
+      <CheckoutModal product={checkoutProduct} onClose={() => setCheckoutProduct(null)} />
 
       {cartProduct && (
         <>
