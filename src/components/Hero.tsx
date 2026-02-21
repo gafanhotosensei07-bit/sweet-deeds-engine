@@ -16,7 +16,7 @@ const Hero: React.FC = () => {
           <div className="flex flex-col items-center text-center">
             <img src="https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392118941-2.png" alt="Frete" className="h-10 mb-2" />
             <p className="text-xs font-bold uppercase">Frete Grátis</p>
-            <p className="text-[10px] text-gray-600">Acima de R$299</p>
+            <p className="text-[10px] text-gray-600">Acima de R$100</p>
           </div>
           <div className="flex flex-col items-center text-center">
             <img src="https://lntdcbtatytixgcnuymw.supabase.co/storage/v1/object/public/cloned-site-images/1771392119649-3.png" alt="Entrega" className="h-10 mb-2" />
