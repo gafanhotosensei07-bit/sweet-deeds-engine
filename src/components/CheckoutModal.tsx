@@ -133,7 +133,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
     });
 
     try {
-      const pixTotal = parseFloat((basePrice * 0.9 * quantity).toFixed(2));
+      const pixTotal = parseFloat(((basePrice * 0.9 * quantity) + shippingCost).toFixed(2));
       const result = await createZeroOnePayOrder({
         customer: form,
         items: [{
