@@ -67,8 +67,8 @@ const SupportChat: React.FC = () => {
     <>
       {/* Chat Window */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-80 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
-          style={{ maxHeight: '480px' }}>
+        <div className="fixed bottom-20 right-4 left-4 md:left-auto md:right-6 md:bottom-24 z-50 md:w-80 shadow-2xl rounded-2xl overflow-hidden flex flex-col"
+          style={{ maxHeight: 'calc(100vh - 120px)' }}>
           {/* Header */}
           <div className="bg-black px-4 py-3 flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-[#f39b19] flex items-center justify-center flex-shrink-0">
