@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Order, ORDER_STATUSES } from '@/hooks/useOrders';
 import { Package, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -110,14 +111,12 @@ const OrderCard: React.FC<{ order: Order }> = ({ order }) => {
             <div className="mt-4 bg-blue-50 border border-blue-200 p-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-blue-700 mb-2">Rastreamento</p>
               <p className="text-sm font-mono font-bold text-blue-900 mb-2">{order.tracking_code}</p>
-              <a
-                href={`https://www.linkcorreios.com.br/?id=${order.tracking_code}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => window.location.href = `/pedido/${order.id}`}
                 className="inline-flex items-center gap-1 text-[10px] bg-blue-600 text-white px-3 py-1.5 font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors"
               >
-                🔗 Rastrear Pedido
-              </a>
+                📦 Ver Rastreamento
+              </button>
             </div>
           )}
 
