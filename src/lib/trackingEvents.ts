@@ -202,7 +202,7 @@ export function generateTrackingEvents(
     }
 
     // DIA 5 — Chegou no estado destino
-    const d5 = addHours(d0, 120);
+    const d5 = addHours(d0, 126);
     const transitCity = getTransitCity(destState);
     events.push({
       date: formatDate(d5),
@@ -213,42 +213,27 @@ export function generateTrackingEvents(
       type: 'info',
     });
 
-    // DIA 6 — Saiu para entrega
-    const d6 = addHours(d0, 144);
+    // DIA 6 — Em rota de entrega
+    const d6 = addHours(d0, 148);
     events.push({
       date: formatDate(d6),
       time: formatTime(d6),
+      status: 'Objeto em Rota de Entrega',
+      description: 'Objeto encaminhado para a unidade de entrega mais próxima do destinatário.',
+      location: `Unidade Local - ${destCity}`,
+      type: 'info',
+    });
+
+    // DIA 7 — Saiu para entrega
+    const d7 = addHours(d0, 160);
+    events.push({
+      date: formatDate(d7),
+      time: formatTime(d7),
       status: 'Saiu para Entrega',
-      description: 'Objeto saiu para entrega ao destinatário. Aguarde em seu endereço.',
+      description: 'Objeto com o entregador, a caminho do seu endereço.',
       location: `Unidade de Entrega - ${destCity}`,
       type: 'success',
     });
-
-    // DIA 6 + 4h — Tentativa frustrada (atraso realista)
-    const d6b = addHours(d0, 148);
-    if (d6b <= now) {
-      events.push({
-        date: formatDate(d6b),
-        time: formatTime(d6b),
-        status: 'Tentativa de Entrega',
-        description: 'Não foi possível entregar — destinatário ausente. Nova tentativa será realizada.',
-        location: destCity,
-        type: 'warning',
-      });
-    }
-
-    // DIA 7 — Nova tentativa
-    const d7 = addHours(d0, 164);
-    if (d7 <= now) {
-      events.push({
-        date: formatDate(d7),
-        time: formatTime(d7),
-        status: 'Saiu para Entrega',
-        description: 'Nova tentativa de entrega ao destinatário.',
-        location: `Unidade de Entrega - ${destCity}`,
-        type: 'info',
-      });
-    }
   }
 
   // Entregue
