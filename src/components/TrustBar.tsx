@@ -1,7 +1,7 @@
 import React from 'react';
 
 const items = [
-  { icon: '🚚', label: 'Frete Grátis', sub: 'Acima de R$299' },
+  { icon: '🚚', label: 'Frete Grátis', sub: 'Acima de R$100' },
   { icon: '🔒', label: 'Compra Segura', sub: 'Pagamento protegido' },
   { icon: '↩️', label: 'Troca Fácil', sub: '30 dias para trocar' },
   { icon: '⭐', label: '4.9 no Google', sub: '+1.200 avaliações' },

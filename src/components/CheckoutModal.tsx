@@ -3,6 +3,8 @@ import { X, ShoppingBag, Truck, Shield, QrCode, Check, Loader2, Copy, CheckCheck
 import { useCart } from '@/context/CartContext';
 import { createZeroOnePayOrder, ZeroOnePayResult } from '@/lib/wbuyApi';
 import { trackEvent } from '@/lib/analytics';
+import ShippingCalculator from './ShippingCalculator';
+import { ShippingOption } from '@/lib/shipping';
 
 export interface CheckoutProduct {
   id: number;
@@ -33,6 +35,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   const [loading, setLoading] = useState(false);
   const [pixResult, setPixResult] = useState<ZeroOnePayResult | null>(null);
   const [copied, setCopied] = useState(false);
+  const [shippingOption, setShippingOption] = useState<ShippingOption | null>(null);
   const pixPollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Para polling de pix_paid quando o PIX estiver exibido
@@ -45,7 +48,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
   if (!product) return null;
 
   const basePrice = parseFloat(product.price.replace(',', '.'));
-  const pixPrice = (basePrice * 0.9 * quantity).toFixed(2).replace('.', ',');
+  const shippingCost = shippingOption?.price || 0;
+  const pixPrice = ((basePrice * 0.9 * quantity) + shippingCost).toFixed(2).replace('.', ',');
   const pixDiscount = ((basePrice * quantity) * 0.1).toFixed(2).replace('.', ',');
   const subtotal = (basePrice * quantity).toFixed(2).replace('.', ',');
 
@@ -372,6 +376,16 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 </div>
               </div>
 
+              {/* Shipping Calculator */}
+              <div className="mb-6">
+                <ShippingCalculator
+                  cartTotal={basePrice * quantity}
+                  onSelectOption={setShippingOption}
+                  selectedOptionId={shippingOption?.id}
+                  compact
+                />
+              </div>
+
               {/* PIX info */}
               <div className="bg-green-50 border border-green-200 p-4 mb-6">
                 <div className="flex items-center gap-2 mb-3">
@@ -386,9 +400,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                   <span>Desconto PIX (10%)</span>
                   <span>-R$ {pixDiscount}</span>
                 </div>
-                <div className="flex justify-between text-xs text-green-600 mb-1">
-                  <span>Frete</span>
-                  <span className="font-bold">GRÁTIS</span>
+                <div className="flex justify-between text-xs mb-1">
+                  <span className={shippingCost === 0 ? 'text-green-600' : 'text-gray-500'}>
+                    Frete {shippingOption ? `(${shippingOption.name})` : ''}
+                  </span>
+                  <span className={`font-bold ${shippingCost === 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                    {shippingCost === 0 ? 'GRÁTIS' : `R$ ${shippingCost.toFixed(2).replace('.', ',')}`}
+                  </span>
                 </div>
                 <div className="border-t border-green-200 pt-2 mt-2 flex justify-between items-center">
                   <span className="font-black text-sm uppercase">Total PIX</span>
