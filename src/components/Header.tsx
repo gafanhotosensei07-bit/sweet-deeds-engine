@@ -33,7 +33,7 @@ const Header: React.FC = () => {
       <div className="bg-[#f39b19] text-white text-center py-1.5 md:py-2 text-[10px] md:text-sm font-medium overflow-hidden">
         <div className="flex justify-center gap-4 md:gap-8 px-2">
           <span>Loja 100% Segura</span>
-          <span className="hidden md:inline">Parcele em até 12x</span>
+          <span className="hidden md:inline">10% de desconto no PIX</span>
           <span className="hidden lg:inline">Frete Expresso e Garantido para todo Brasil</span>
         </div>
       </div>
