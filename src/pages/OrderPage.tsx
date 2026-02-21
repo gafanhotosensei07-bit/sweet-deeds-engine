@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Order, ORDER_STATUSES } from '@/hooks/useOrders';
 import { Package, Truck, Shield, Copy, CheckCheck, ArrowLeft, MapPin, AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import { generateTrackingEvents, TrackingEvent } from '@/lib/trackingEvents';
+import { generateTrackingEvents, isTrackingExpired } from '@/lib/trackingEvents';
 
 const statusIndex = (status: string) => ORDER_STATUSES.findIndex(s => s.key === status);
 
@@ -81,6 +81,8 @@ const OrderPage: React.FC = () => {
     );
   }, [order.created_at, order.shipping_state, order.status, order.shipping_city]);
 
+  const expired = useMemo(() => isTrackingExpired(order.created_at), [order.created_at]);
+
   return (
     <div className="min-h-screen bg-gray-50 font-['Maven_Pro',sans-serif]">
       {/* Header */}
@@ -125,8 +127,8 @@ const OrderPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tracking Code */}
-        {order.tracking_code && (
+        {/* Tracking Code - hidden after 7 days */}
+        {order.tracking_code && !expired && (
           <div className="bg-blue-50 border border-blue-200 p-5">
             <div className="flex items-center gap-2 mb-3">
               <Truck size={16} className="text-blue-600" />
@@ -143,6 +145,14 @@ const OrderPage: React.FC = () => {
                 {copied ? <><CheckCheck size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
               </button>
             </div>
+          </div>
+        )}
+
+        {expired && (
+          <div className="bg-green-50 border border-green-200 p-5 text-center">
+            <CheckCircle size={24} className="text-green-600 mx-auto mb-2" />
+            <p className="font-black text-sm uppercase tracking-widest text-green-700">Pedido Entregue</p>
+            <p className="text-[10px] text-gray-500 mt-1">O rastreamento foi encerrado. Obrigado pela compra!</p>
           </div>
         )}
 
@@ -179,8 +189,8 @@ const OrderPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Rastreamento Detalhado */}
-        <div className="bg-white border border-gray-200 p-5">
+        {/* Rastreamento Detalhado - hidden after 7 days */}
+        {!expired && <div className="bg-white border border-gray-200 p-5">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Rastreamento do Pedido</p>
             <span className="text-[9px] text-gray-400">{trackingEvents.length} atualizações</span>
@@ -229,7 +239,7 @@ const OrderPage: React.FC = () => {
               );
             })}
           </div>
-        </div>
+        </div>}
 
         {/* Delivery Info */}
         {order.estimated_delivery && order.status !== 'delivered' && (
