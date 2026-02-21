@@ -30,8 +30,8 @@ const Header: React.FC = () => {
   return (
     <header className="w-full">
       {/* Top Bar */}
-      <div className="bg-[#f39b19] text-white text-center py-2 text-sm font-medium overflow-hidden">
-        <div className="flex justify-center gap-8">
+      <div className="bg-[#f39b19] text-white text-center py-1.5 md:py-2 text-[10px] md:text-sm font-medium overflow-hidden">
+        <div className="flex justify-center gap-4 md:gap-8 px-2">
           <span>Loja 100% Segura</span>
           <span className="hidden md:inline">Parcele em até 12x</span>
           <span className="hidden lg:inline">Frete Expresso e Garantido para todo Brasil</span>
@@ -122,10 +122,10 @@ const Header: React.FC = () => {
       </div>
 
       {/* Desktop Navigation */}
-      <nav className="bg-black text-white hidden md:block">
+      <nav className="bg-black text-white hidden md:block overflow-x-auto">
         <div className="container mx-auto px-4">
-          <ul className="flex justify-center gap-8 py-3 text-xs font-bold uppercase tracking-wider">
-            <li><a href="#" onClick={(e) => { e.preventDefault(); scrollTo('section-mais-vendidos'); }} className="hover:text-[#f39b19]">2 POR R$200 - LANÇAMENTOS</a></li>
+          <ul className="flex justify-center gap-4 lg:gap-8 py-3 text-[10px] lg:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+            <li><a href="#" onClick={(e) => { e.preventDefault(); scrollTo('section-mais-vendidos'); }} className="hover:text-[#f39b19]">2 POR R$200</a></li>
             <li><a href="#" onClick={(e) => { e.preventDefault(); scrollTo('section-tn'); }} className="hover:text-[#f39b19]">NIKE TN</a></li>
             <li><a href="#" onClick={(e) => { e.preventDefault(); scrollTo('section-mais-vendidos'); }} className="hover:text-[#f39b19]">Todos os Modelos</a></li>
             <li><a href="#" onClick={(e) => { e.preventDefault(); scrollTo('section-mais-vendidos'); }} className="hover:text-[#f39b19]">Mais Vendidos</a></li>
