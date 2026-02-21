@@ -25,6 +25,8 @@ const COMBO_PRODUCTS: CheckoutProduct[] = [
 
 const SIZES = ['34', '35', '36', '37', '38', '39', '40', '41', '42', '43', '44'];
 
+type ComboMode = 'duo' | 'trio';
+
 interface SelectedItem {
   product: CheckoutProduct;
   size: string;
@@ -32,28 +34,38 @@ interface SelectedItem {
 
 const ComboSection: React.FC = () => {
   const { addItem, openCart } = useCart();
+  const [mode, setMode] = useState<ComboMode>('duo');
   const [selected, setSelected] = useState<SelectedItem[]>([]);
   const [sizeModalProduct, setSizeModalProduct] = useState<CheckoutProduct | null>(null);
   const [pendingSize, setPendingSize] = useState('');
   const [comboAdded, setComboAdded] = useState(false);
 
+  const maxItems = mode === 'duo' ? 2 : 3;
   const isSelected = (id: number) => selected.some(s => s.product.id === id);
   const selectedCount = selected.length;
-  const comboComplete = selectedCount === 3;
+  const comboComplete = selectedCount === maxItems;
 
   const priceOf = (p: CheckoutProduct) => parseFloat(p.price.replace(',', '.'));
   const subtotal = selected.reduce((sum, s) => sum + priceOf(s.product), 0);
-  const discount = subtotal * 0.5;
-  const total = subtotal * 0.5;
+
+  // Duo = fixed R$200, Trio = 50% off
+  const total = mode === 'duo' ? 200 : subtotal * 0.5;
+  const discount = subtotal - total;
 
   const fmt = (n: number) => n.toFixed(2).replace('.', ',');
+
+  const handleSwitchMode = (newMode: ComboMode) => {
+    if (newMode === mode) return;
+    setMode(newMode);
+    setSelected([]);
+  };
 
   const handleSelectProduct = (product: CheckoutProduct) => {
     if (isSelected(product.id)) {
       setSelected(prev => prev.filter(s => s.product.id !== product.id));
       return;
     }
-    if (selectedCount >= 3) return;
+    if (selectedCount >= maxItems) return;
     setSizeModalProduct(product);
     setPendingSize('');
   };
@@ -66,9 +78,17 @@ const ComboSection: React.FC = () => {
   };
 
   const handleAddCombo = () => {
-    selected.forEach(item => {
-      addItem(item.product, item.size, 1);
-    });
+    if (mode === 'duo') {
+      // For duo combo, override prices to R$100 each
+      selected.forEach(item => {
+        const comboProduct = { ...item.product, price: '100,00', oldPrice: item.product.price };
+        addItem(comboProduct, item.size, 1);
+      });
+    } else {
+      selected.forEach(item => {
+        addItem(item.product, item.size, 1);
+      });
+    }
     setComboAdded(true);
     setSelected([]);
     setTimeout(() => {
@@ -77,10 +97,13 @@ const ComboSection: React.FC = () => {
     }, 1200);
   };
 
+  const modeLabel = mode === 'duo' ? '2 Tênis por R$200' : '3 Tênis com 50% OFF';
+  const discountLabel = mode === 'duo' ? 'R$200 o PAR' : '50% OFF';
+
   return (
     <section className="bg-black py-8 md:py-16 border-t-4 border-[#f39b19]">
       {/* Header */}
-      <div className="container mx-auto px-4 mb-10">
+      <div className="container mx-auto px-4 mb-6">
         <div className="flex flex-col items-center text-center">
           <span className="text-[10px] font-black uppercase tracking-[0.4em] text-[#f39b19] border border-[#f39b19] px-4 py-1 mb-4">
             Oferta Exclusiva
@@ -88,18 +111,48 @@ const ComboSection: React.FC = () => {
           <h2 className="text-white font-black uppercase leading-none mb-2" style={{ fontSize: 'clamp(1.8rem, 7vw, 4.5rem)', letterSpacing: '-0.03em' }}>
             MONTE SEU COMBO
           </h2>
-          <p className="text-gray-400 text-xs uppercase tracking-[0.2em] max-w-xl">
-            Escolha <strong className="text-[#f39b19]">3 tênis</strong> de sua preferência e ganhe{' '}
-            <strong className="text-[#f39b19]">50% de desconto</strong> automático no total
+          <p className="text-gray-400 text-xs uppercase tracking-[0.2em] max-w-xl mb-6">
+            Escolha o combo ideal e economize muito
           </p>
 
+          {/* Mode Selector */}
+          <div className="flex gap-3 mb-6">
+            <button
+              onClick={() => handleSwitchMode('duo')}
+              className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-2 transition-all duration-300 ${
+                mode === 'duo'
+                  ? 'bg-[#f39b19] text-black border-[#f39b19]'
+                  : 'bg-transparent text-white border-white/20 hover:border-[#f39b19] hover:text-[#f39b19]'
+              }`}
+            >
+              🔥 2 Tênis por R$200
+            </button>
+            <button
+              onClick={() => handleSwitchMode('trio')}
+              className={`px-6 py-3 text-xs font-black uppercase tracking-widest border-2 transition-all duration-300 ${
+                mode === 'trio'
+                  ? 'bg-[#f39b19] text-black border-[#f39b19]'
+                  : 'bg-transparent text-white border-white/20 hover:border-[#f39b19] hover:text-[#f39b19]'
+              }`}
+            >
+              ⚡ 3 Tênis com 50% OFF
+            </button>
+          </div>
+
           {/* How it works */}
-          <div className="flex gap-6 mt-6 flex-wrap justify-center">
-            {[
-              { step: '01', text: 'Escolha 3 tênis' },
-              { step: '02', text: 'Selecione o tamanho' },
-              { step: '03', text: 'Ganhe 50% OFF' },
-            ].map(({ step, text }) => (
+          <div className="flex gap-6 flex-wrap justify-center">
+            {(mode === 'duo'
+              ? [
+                  { step: '01', text: 'Escolha 2 tênis' },
+                  { step: '02', text: 'Selecione o tamanho' },
+                  { step: '03', text: 'Pague R$200 no total' },
+                ]
+              : [
+                  { step: '01', text: 'Escolha 3 tênis' },
+                  { step: '02', text: 'Selecione o tamanho' },
+                  { step: '03', text: 'Ganhe 50% OFF' },
+                ]
+            ).map(({ step, text }) => (
               <div key={step} className="flex items-center gap-2">
                 <span className="w-7 h-7 rounded-full bg-[#f39b19] text-black text-[10px] font-black flex items-center justify-center">{step}</span>
                 <span className="text-white text-[11px] font-bold uppercase tracking-widest">{text}</span>
@@ -113,7 +166,7 @@ const ComboSection: React.FC = () => {
       <div className="sticky top-0 z-30 bg-black border-y border-[#f39b19]/30 py-3 mb-8">
         <div className="container mx-auto px-4 flex items-center gap-4">
           <div className="flex gap-2 flex-1">
-            {[0, 1, 2].map(i => {
+            {Array.from({ length: maxItems }).map((_, i) => {
               const item = selected[i];
               return (
                 <div key={i} className={`flex-1 h-14 border-2 transition-all duration-300 flex items-center justify-center overflow-hidden relative ${item ? 'border-[#f39b19]' : 'border-white/10'}`}>
@@ -135,14 +188,14 @@ const ComboSection: React.FC = () => {
 
           {comboComplete ? (
             <div className="flex-shrink-0 text-right">
-              <p className="text-[#f39b19] text-[10px] font-black uppercase">50% OFF Aplicado!</p>
+              <p className="text-[#f39b19] text-[10px] font-black uppercase">{discountLabel} Aplicado!</p>
               <p className="text-white text-lg font-black">R$ {fmt(total)}</p>
               <p className="text-gray-500 text-[9px] line-through">R$ {fmt(subtotal)}</p>
             </div>
           ) : (
             <div className="flex-shrink-0 text-right">
-              <p className="text-gray-400 text-[10px] uppercase tracking-widest">{selectedCount}/3 selecionados</p>
-              <p className="text-white text-sm font-black">{3 - selectedCount} restante{3 - selectedCount !== 1 ? 's' : ''}</p>
+              <p className="text-gray-400 text-[10px] uppercase tracking-widest">{selectedCount}/{maxItems} selecionados</p>
+              <p className="text-white text-sm font-black">{maxItems - selectedCount} restante{maxItems - selectedCount !== 1 ? 's' : ''}</p>
             </div>
           )}
         </div>
@@ -153,14 +206,14 @@ const ComboSection: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-[#f39b19]/10">
           {COMBO_PRODUCTS.map(product => {
             const sel = isSelected(product.id);
-            const blocked = !sel && selectedCount >= 3;
+            const blocked = !sel && selectedCount >= maxItems;
+            const unitPrice = mode === 'duo' ? 100 : priceOf(product) * 0.5;
             return (
               <div
                 key={product.id}
                 onClick={() => !blocked && handleSelectProduct(product)}
                 className={`relative group bg-black overflow-hidden transition-all duration-200 cursor-pointer ${blocked ? 'opacity-30 cursor-not-allowed' : 'hover:bg-[#111]'} ${sel ? 'ring-2 ring-[#f39b19] ring-inset' : ''}`}
               >
-                {/* Selected overlay */}
                 {sel && (
                   <div className="absolute inset-0 bg-[#f39b19]/20 z-10 flex items-center justify-center pointer-events-none">
                     <div className="w-10 h-10 bg-[#f39b19] rounded-full flex items-center justify-center shadow-lg">
@@ -169,9 +222,10 @@ const ComboSection: React.FC = () => {
                   </div>
                 )}
 
-                {/* Discount badge */}
                 <div className="absolute top-2 right-2 z-20">
-                  <span className="bg-[#f39b19] text-black text-[9px] font-black px-1.5 py-0.5 block">-50%</span>
+                  <span className="bg-[#f39b19] text-black text-[9px] font-black px-1.5 py-0.5 block">
+                    {mode === 'duo' ? '2 POR R$200' : '-50%'}
+                  </span>
                 </div>
 
                 <div className="aspect-square overflow-hidden">
@@ -181,7 +235,7 @@ const ComboSection: React.FC = () => {
                 <div className="p-3">
                   <h3 className="text-white text-[10px] font-black uppercase leading-tight mb-1 line-clamp-2">{product.name}</h3>
                   <p className="text-gray-600 text-[9px] line-through">R$ {product.price}</p>
-                  <p className="text-[#f39b19] font-black text-sm">R$ {fmt(priceOf(product) * 0.5)}</p>
+                  <p className="text-[#f39b19] font-black text-sm">R$ {fmt(unitPrice)}</p>
                   <p className="text-gray-500 text-[9px]">no combo</p>
                 </div>
 
@@ -209,7 +263,7 @@ const ComboSection: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <Tag size={16} className="text-[#f39b19]" />
-                  <span className="text-[#f39b19] font-black text-xs uppercase tracking-widest">Seu Combo de 3 Tênis</span>
+                  <span className="text-[#f39b19] font-black text-xs uppercase tracking-widest">{modeLabel}</span>
                 </div>
                 <div className="flex gap-3 flex-wrap">
                   {selected.map(s => (
@@ -225,7 +279,7 @@ const ComboSection: React.FC = () => {
               </div>
               <div className="text-right flex-shrink-0">
                 <p className="text-gray-500 text-xs line-through">De R$ {fmt(subtotal)}</p>
-                <p className="text-green-400 text-sm font-bold">-R$ {fmt(discount)} (50% OFF)</p>
+                <p className="text-green-400 text-sm font-bold">-R$ {fmt(discount)}</p>
                 <p className="text-white font-black text-2xl">R$ {fmt(total)}</p>
                 <p className="text-gray-500 text-[10px]">10% OFF no PIX</p>
               </div>
@@ -257,7 +311,7 @@ const ComboSection: React.FC = () => {
           ) : (
             <>
               <Zap size={20} />
-              Selecione {3 - selectedCount} tênis para desbloquear o 50% OFF
+              Selecione {maxItems - selectedCount} tênis para desbloquear
             </>
           )}
         </button>
@@ -272,7 +326,10 @@ const ComboSection: React.FC = () => {
               <img src={sizeModalProduct.image} alt={sizeModalProduct.name} className="w-14 h-14 object-cover bg-gray-50" />
               <div>
                 <p className="font-black text-xs uppercase leading-tight">{sizeModalProduct.name}</p>
-                <p className="text-[#f39b19] font-black text-sm mt-0.5">R$ {fmt(priceOf(sizeModalProduct) * 0.5)} <span className="text-gray-400 text-[10px] line-through font-normal">R$ {sizeModalProduct.price}</span></p>
+                <p className="text-[#f39b19] font-black text-sm mt-0.5">
+                  R$ {fmt(mode === 'duo' ? 100 : priceOf(sizeModalProduct) * 0.5)}{' '}
+                  <span className="text-gray-400 text-[10px] line-through font-normal">R$ {sizeModalProduct.price}</span>
+                </p>
               </div>
             </div>
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-3">Selecione o tamanho (BR)</p>
