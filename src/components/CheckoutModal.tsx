@@ -251,6 +251,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
 
         <div className="overflow-y-auto flex-1">
 
+          
           {/* PIX STEP */}
           {step === 'pix' && (
             <div className="flex flex-col items-center py-8 px-8 text-center">
@@ -327,8 +328,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
             </div>
           )}
 
-          {/* STEP 1: Produto */}
-          {step === 'product' && (
+          {/* STEP 1: Produto - use CSS hidden to preserve ShippingCalculator state */}
+          <div className={step !== 'product' ? 'hidden' : ''}>
             <div className="p-6">
               {/* Product */}
               <div className="flex gap-4 mb-6 pb-6 border-b border-gray-100">
@@ -384,7 +385,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 </div>
               </div>
 
-              {/* Shipping Calculator */}
+              {/* Shipping Calculator - always mounted to preserve state */}
               <div className="mb-6">
                 <ShippingCalculator
                   cartTotal={basePrice * quantity}
@@ -443,7 +444,7 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ product, onClose }) => {
                 Continuar →
               </button>
             </div>
-          )}
+          </div>
 
           {/* STEP 2: Dados */}
           {step === 'form' && (
